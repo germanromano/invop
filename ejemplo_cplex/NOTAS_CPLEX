@@ -1,0 +1,271 @@
+1. INSTALACION:
+
+CPLEX viene en un archivo .bin. Pasos para instalarlo.
+
+(1) Darle permisos de ejecucion.
+(2) Ejecutar el archivo. Si la instalacion va a ser generica (por ejemplo, en /usr/ o /opt/, asegurarse de tener los permisos necesarios).
+
+El instalador es por consola y solo lleva dos pasos. Acepten la licencia y seleccionen donde lo quieren instalar.
+
+CPLEX puede ser utilizado en dos modalidades:
+
+(1) Interactive optimzer: Desde la linea de comandos se puede ejecutar una consola e interactuar con CPLEX desde ahi. Se pueden leer archivos, 
+resolver LPs, MIPs, etc., consultar las solucion y demas informacion, setear el algoritmo de resolucion, etc. 
+(2) Callable Library y otros: Mediante codigo (C, C++. Java, etc) que interactue con las librerias de CPLEX. Callable Library es el nombre que
+se le da a la libreria de C.
+
+Para testear que el progrma este bien instalado y la licencia este funcionando probamos el Interactive Optimizer. En el directorio donde se
+haya instalado CPLEX, buscar el archivo 
+
+----------------------------------------------------------------
+$ /usr/ilog/cplex124/cplex/bin/x86-64_sles10_4.1/cplex
+----------------------------------------------------------------
+
+El directorio /usr/ilog/cplex124 es el directorio de instalacion de CPLEX. Ademas, el subdirectorio x86-64_sles10_4.1/ esta porque la version
+instalada es de 64 bits. Lo que instalen la de 32 bits deberian tener un directorio similar, pero reemplazando el 64 por 32. Cuando ejecuten el
+comando, deberian ver en la pantalla una salida similar a la siguiente:	
+
+-----------------------------------------------------------------
+$ /opt/ibm/ILOG/CPLEX_Studio124/cplex/bin/x86-64_sles10_4.1/cplex
+
+Welcome to IBM(R) ILOG(R) CPLEX(R) Interactive Optimizer 12.4.0.0
+  with Simplex, Mixed Integer & Barrier Optimizers
+5725-A06 5725-A29 5724-Y48 5724-Y49 5724-Y54 5724-Y55
+Copyright IBM Corp. 1988, 2011.  All Rights Reserved.
+
+Type 'help' for a list of available commands.
+Type 'help' followed by a command name for more
+information on commands.
+
+CPLEX> 
+-----------------------------------------------------------------
+
+Ahi ya estan dentro del Interactive Optimizer. CPLEX> es el prompt donde vamos a ejecutar comandos.
+
+2. INTERACTIVE OPTIMIZER
+
+La consola de CPLEX permite ingresar un problema de distintas formas. Sin embargo, la mas facil es mediante un archivo que contenga la definicion
+del problema. Para ellos, CPLEX maneja distintos formatos con caracteristicas particulares. Uno de los mas comodos para utilizar es el formato .lp. 
+
+La interaccion con CPLEX se da mediante una secuencia de comandos. Si tipeamos 'help' en el prompt CPLEX nos va a mostrar el primer nivel de los
+comandos que podemos ejecutar.
+
+---------------------------------------------------------------------------------
+CPLEX> help
+
+add             add constraints to the problem
+baropt          solve using barrier algorithm
+change          change the problem
+conflict        refine a conflict for an infeasible problem
+display         display problem, solution, or parameter settings
+enter           enter a new problem
+feasopt         find relaxation to an infeasible problem
+help            provide information on CPLEX commands
+mipopt          solve a mixed integer program
+netopt          solve the problem using network method
+optimize        solve the problem
+populate        get additional solutions for a mixed integer program
+primopt         solve using the primal method
+quit            leave CPLEX
+read            read problem or advanced start information from a file
+set             set parameters
+tranopt         solve using the dual method
+tune            try a variety of parameter settings
+write           write problem or solution information to a file
+xecute          execute a command from the operating system
+
+Enter enough characters to uniquely identify commands & options. Commands can be
+entered partially (CPLEX will prompt you for further information) or as a whole.
+CPLEX>
+--------------------------------------------------------------------------------- 
+
+Empezamos por leer un problema. En este caso, estoy parado en el directorio BasicoCPLEX/instancias/. El comando 'read knapsack.lp', va 
+a leer el archivo con la definicion del problema. Despues, ejecutamos el comando 'optimize' para resolverlo. Aca
+va la salida completa.
+
+---------------------------------------------------------------
+CPLEX> read knapsack.lp
+Problem 'knapsack.lp' read.
+Read time =    0.04 sec.
+CPLEX> optimize
+Tried aggregator 1 time.
+No LP presolve or aggregator reductions.
+Presolve time =    0.00 sec.
+
+Iteration log . . .
+Iteration:     1   Dual objective     =           295.000000
+
+Dual simplex - Optimal:  Objective =  2.9500000000e+02
+Solution time =    0.00 sec.  Iterations = 1 (0)
+Deterministic time = 0.00 ticks  (4.50 ticks/sec)
+
+CPLEX> 
+---------------------------------------------------------------
+
+La salida nos esta diciendo que pudo leer el archivo sin problemas. Despues de optimizar el problema, nos da alguna informacion sobre la 
+resolucion y la solucion. De todo lo que esta en pantalla, podemos ver que utilizo el algoritmo "Dual Simplex" para resolverlo (es una
+variante del algoritmo Simplex, ya vamos a ver algo al respecto en la materia), que el valor de la funcion objetivo en el optimo es 295 y
+que realizo una unica iteracion. Las otras lineas informan algunas otras cosas que probo e hizo (CPLEX es una herramienta muy completa y 
+aplica muchas tecnicas para mejorar los tiempos).
+
+Ahora lo que vamos a hacer es resolver el mismo problema, pero cambiando el algoritmo de resolucion. Las cosas que CPLEX hace por
+default pueden ser modificada mediante el seteo de los parametros correspondientes. El comando principal para modificar estos parametros
+es 'set'. Para modificar el algoritmo de resolucion, del listado de opciones elegimos lpmethod y seteamos el valor correspondiente. Esta 
+es la salida completa, incluyendo la salida luego de optimizar nuevamente el problema.
+
+--------------------------------------------------------------------------
+CPLEX> set
+
+Available Parameters:
+
+advance          set indicator for advanced starting information
+barrier          set parameters for barrier optimization
+clocktype        set type of clock used to measure time
+conflict         set parameters for finding conflicts
+defaults         set all parameter values to defaults
+dettimelimit     set deterministic time limit in ticks
+emphasis         set optimization emphasis
+feasopt          set parameters for feasopt
+logfile          set file to which results are printed
+lpmethod         set method for linear optimization
+mip              set parameters for mixed integer optimization
+network          set parameters for network optimizations
+output           set extent and destinations of outputs
+parallel         set parallel optimization mode
+preprocessing    set parameters for preprocessing
+qpmethod         set method for quadratic optimization
+read             set problem read parameters
+sifting          set parameters for sifting optimization
+simplex          set parameters for primal and dual simplex optimizations
+solutiontarget   set type of solution CPLEX will attempt to compute
+threads          set default parallel thread count
+timelimit        set time limit in seconds
+tune             set parameters for parameter tuning
+workdir          set directory for working files
+workmem          set memory available for working storage (in megabytes)
+
+Parameter to set: lpmethod
+Present value for method for linear optimization: 0
+ 0 = automatic
+ 1 = primal simplex
+ 2 = dual simplex
+ 3 = network simplex
+ 4 = barrier
+ 5 = sifting
+ 6 = concurrent dual, barrier, and primal
+New value for method for linear optimization: 1
+New value for method for linear optimization: 1
+CPLEX> optimize
+
+Primal simplex - Optimal:  Objective =  2.9500000000e+02
+Solution time =    0.00 sec.  Iterations = 0 (0)
+Deterministic time = 0.00 ticks  (0.47 ticks/sec)
+
+CPLEX> 
+----------------------------------------------------------------------------
+
+En caso de saber cual es el parametro a modificar y el nuevo valor, la secuencia puede ser ingresada de una sola vez. Por ejemplo, para
+cambiar el algoritmo de resolucion de LPs lo mismo que hicimos antes se puede hacer con la siguiente linea:
+
+-----------------------------------------------
+CPLEX> set lpmethod 1
+New value for method for linear optimization: 1
+CPLEX>
+-----------------------------------------------
+
+Una vez resuelto el LP, podemos consultar distintos aspectos de la solucion. La forma es similar a la del seteo de parametros. En la
+siguiente secuencia, leemos un LP, lo resolvemos y consultamos cual es el valor de la funcion objetivo.
+
+---------------------------------------------------------------------------------
+CPLEX> read knapsack.lp
+Problem 'knapsack.lp' read.
+Read time =    0.00 sec.
+CPLEX> optimize
+Tried aggregator 1 time.
+No LP presolve or aggregator reductions.
+Presolve time =    0.00 sec.
+
+Iteration log . . .
+Iteration:     1   Dual objective     =           295.000000
+
+Dual simplex - Optimal:  Objective =  2.9500000000e+02
+Solution time =    0.00 sec.  Iterations = 1 (0)
+Deterministic time = 0.00 ticks  (4.50 ticks/sec)
+
+CPLEX> display
+Display Options:
+
+auxilliary        display auxilliary information used during optimization
+conflict          display the conflict that demonstrates problem infeasibility
+problem           display problem characteristics
+sensitivity       display sensitivity analysis
+settings          display parameter settings
+solution          display existing solution
+
+Display what: solution
+
+Display Solution Options:
+
+basis             display a range of basic constraints or variables
+bestbound         display the current MIP best bound
+difference        display the difference between two pool solutions
+dual              display a set of solution dual values
+kappa             display the condition number of the basis matrix
+list              display a list of solutions in the solution pool
+member            display a solution from the solution pool
+objective         display the solution objective value
+pool              display solution pool statistics
+qcslacks          display a set of solution quadratic constraint slack values
+quality           display the quality of the solution
+reduced           display a set of solution reduced costs
+slacks            display a set of solution slack values
+variables         display a set of solution variable values
+
+Display which part of the solution: objective
+Dual simplex - Optimal:  Objective =  2.9500000000e+02
+Deterministic time = 0.00 ticks  (0.00 ticks/sec)
+CPLEX>                
+-------------------------------------------------------------------------------
+
+El mismo resultado lo podemos obtener con el siguiente comando.
+
+------------------------------------------------------
+CPLEX> display solution objective
+Dual simplex - Optimal:  Objective =  2.9500000000e+02
+Deterministic time = 0.00 ticks  (0.00 ticks/sec)
+CPLEX> 
+------------------------------------------------------
+
+Por ultimo, vamos a consultar los valores de las variables en la solucion optima. CPLEX en general muestra solamente aquellas que son
+distintas de cero. De forma similar a la que consultamos la funcion objetivo, ejecutamos el siguiente comando (tambien se puede hacer 
+secuencialemente, ingresando los comandos de a uno y viendo la lista de opciones). El ultimo parametro, 1-8, indica el rango de indices
+que queremos que muestre (en el problema hay 8 variables, por lo tanto las estamos mostrando todas). 
+
+-------------------------------------------
+CPLEX> display solution variables 1-8
+Variable Name           Solution Value
+x1                            1.000000
+x2                            1.000000
+x3                            1.000000
+x4                            1.000000
+x5                            0.750000
+All other variables in the range 1-8 are 0.
+CPLEX> 
+-------------------------------------------
+
+Entre otras cosas, tambien se puede consultar que variable son basicas, que restricciones son basicas, el valor de las slacks, etc. 
+La sugerencia es que vayan investigando de a poco las opciones a medida que las vayan necesitando.
+
+En el directorio instancias/ hay algunos LPs de ejemplo, incluyendo algunos correspondientes a ejercicios de la practica 2. Como consejo, 
+para facilitar la lectura y el chequeo del modelo, no usen siempre 'x' como nombre de variable. El lenguaje es un poco mas flexible y se 
+pueden utilizar distintos nombres para distintas variables, o incluso usar '_' (underscore) para, por ejemplo, separar indices.
+
+2. CALLABLE LIBRARY.
+
+Por si quieren ir investigando como interactuar mediante las librerias (es lo que vamos a usar en el TP), en el directorio src, les adjunto un archivo .cpp
+con el codigo y un Makefile con las librerias y directorios para incluir y linkear. El codigo esta comentado, indicando que se busca hacer
+en cada parte del codigo. De todos modos, la sugerencia es que tengan siempre a mano la documentacion de CPLEX que viene con el software
+(la pueden encontrar en el directorio doc/html/en-US/documentation.html dentro de la instalacion de CPLEX). Ademas, dentro de la instalacion 
+de CPLEX tambien van a encontrar un directorio con varios ejemplos sobre como interactuar mediante la libreria. 
+
+
