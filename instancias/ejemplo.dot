@@ -1,5 +1,6 @@
 //10
 //47
+//3
 graph ejemplo {
 
 	subgraph cluster_0{

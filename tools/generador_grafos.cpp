@@ -1,5 +1,5 @@
 //GENERA GRAFOS NO DIRIGIDOS EN FORMATO DOT
-//Uso: cant_nodos densidad output_file (0 <= densidad <= 1)
+//Uso: cant_nodos cant_particiones densidad output_file (0 <= densidad <= 1)
 
 #include <iostream>
 #include <stdlib.h>
@@ -10,13 +10,18 @@
 using namespace std;
 
 vector< pair <int, int> > generar_grafo(int n, double p);
+vector< pair <int, int> > generar_particion(int n, int k);
+
+string colores[] = {"red", "green", "blue", "yellow", "black", "chocolate", "gold", "pink", 
+	"purple", "steelblue", "tomato", "seagreen", "firebrick", "cyan", "brown", "forestgreen", "indigo"};
 
 int main(int argc, char** argv){	
-	if(argc < 3) cout << "Uso: cant_nodos densidad output_file (0 <= densidad <= 1)" << endl;  
+	if(argc < 4) cout << "Uso: cant_nodos cant_particiones densidad output_file (0 <= densidad <= 1)" << endl;  
 
-	int n = atoi(argv[1]);         
-	float p = atof(argv[2]);
-	string archivoOut(argv[3]);
+	int n = atoi(argv[1]);
+	int k = atoi(argv[2]);         
+	float p = atof(argv[3]);
+	string archivoOut(argv[4]);
 	srand (time(NULL));
 
 	fstream ofs;
@@ -25,8 +30,10 @@ int main(int argc, char** argv){
     string graph_name;
     graph_name.append(archivoOut.substr(0, archivoOut.rfind(".")));
 	
-	vector< pair <int, int> > v = generar_grafo(n, p);
-	int m = v.size();
+	vector< pair <int, int> > particion = generar_particion(n, k);
+	
+	vector< pair <int, int> > aristas = generar_grafo(n, p);
+	int m = aristas.size();
 
 	//FORMATO SNAP
 	//ofs << "# Directed graph (each unordered pair of nodes is saved once):" << endl;
@@ -35,16 +42,50 @@ int main(int argc, char** argv){
 	//ofs << "# FromNodeId	ToNodeId" << endl;
 	
 	//FORMATO DOT
-	ofs << "//" << n << endl << "//" << m << endl;
+	//Primeras tres lineas: cant nodos (n), cant aristas (m), cant particiones (k)
+	ofs << "//" << n << endl << "//" << m << endl << "//" << k << endl;
 	ofs << "graph " << graph_name << " {" << endl;
 	
-	for(unsigned int i = 0; i < v.size(); i++)
-		ofs << "\t" << v[i].first << " -- " << v[i].second << ";" << endl;
+	bool vacia = true;
+	for(unsigned int i = 0; i < k; i++){
+		for(unsigned int j = 0; j < n; j++)
+			if(particion[j].second == i+1){
+				if(!vacia) ofs << ", " << j+1;
+				else{
+					vacia = false;
+					ofs << endl << "\tsubgraph cluster_" << i << "{" << endl << "\t";
+					ofs << j+1;
+					}
+			}
+		
+		if(!vacia){
+			ofs << ";" << endl;
+			ofs << "\tlabel = \"V" << i+1 << "\";" << endl;
+			ofs << "\tcolor = red;" << endl << "\tpenwidth = 3;" << endl << "\t}" << endl << endl;
+			vacia = true;
+		}
+	}
+		
+	for(unsigned int i = 0; i < aristas.size(); i++)
+		ofs << "\t" << aristas[i].first << " -- " << aristas[i].second << ";" << endl;
 		
 	ofs << "}" << endl;
 
 	return 0;
 }
+
+vector< pair <int, int> > generar_particion(int n, int k){
+	int dado;
+	vector< pair <int, int> > v;
+	
+	for(int i = 1; i <= n; i++){
+		dado = rand() % k + 1;
+		pair <int, int> ubicacion (i, dado);
+		v.push_back(ubicacion);
+		}
+	
+	return v;
+	}
 
 vector< pair <int, int> > generar_grafo(int n, double p){
 	int dado;
