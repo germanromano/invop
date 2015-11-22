@@ -15,7 +15,9 @@ pair <vector<vector<bool> >, vector<vector<bool> > > parsear_entrada(string inpu
 int main(int argc, char *argv[]) {
   string archivo_entrada(argv[1]);
   
-  parsear_entrada(archivo_entrada);
+  pair <vector<vector<bool> >, vector<vector<bool> > > grafo = parsear_entrada(archivo_entrada);
+  vector<vector<bool> > adyacencias = grafo.first; //matriz de adyacencia
+  vector<vector<bool> > particion = grafo.second;  //filas: subconjuntos de la particion. columnas: nodos.
 
   // Datos de la instancia de dieta
   int n = 3;
@@ -270,39 +272,59 @@ pair <vector<vector<bool> >, vector<vector<bool> > > parsear_entrada(string inpu
 	file >> aux;
 	k = atoi(aux.substr(2, aux.length()-2).c_str());
 	
-	unsigned int x, y;
 	vector<vector<bool> > particion(k, vector<bool>(n, false));
-	
+	 
 	//Cargo particion
 	for(unsigned int i = 0; i < k; i++){
-		file >> aux; file >> aux; file >> aux; file >> aux; file >> aux;
+		getline(file, line); getline(file, line); getline(file, line); getline(file, line);
 		aux = file.get();
+
+		getline(file, line, ';');
+		char line_no_const[line.length()];
+		for(int j = 0; j < line.length(); j++) line_no_const[j] = line[j];
 		
-		//No funciona, chequear
-		/*getline(file, line, ';');
-		pch = strtok(&line, " ,");
-		cout << pch << endl;
+		pch = strtok(line_no_const, " ,");
 		while (pch != NULL){
-			cout << pch << endl;
-			cout << "HOLA" << endl;
+			particion[i][atoi(pch)] = true;
 			pch = strtok(NULL, " ,");
-		}*/
+		}
 		
-		//Toma hasta la coma => cuando hay ; no para
-		/*while(aux.compare(";") != 0){
-			aux = file.get();
-			getline(file, aux, ',');
-			x = atoi(aux.c_str());
-			particion[i][x] = true;
-			cout << "LEVANTO NODO " << x << endl;
-			aux = file.get();
-		}*/
-		
-		file >> aux; file >> aux; file >> aux; file >> aux;
+		getline(file, line); getline(file, line); getline(file, line);
 	}
-	
+
+	/*cout << "Particion:" << endl;
+	for(int i = 0; i < particion.size(); i++){
+		for(int j = 0; j < particion[i].size(); j++)
+			cout << particion[i][j] << " ";
+		cout << endl;
+	}*/
 	
 	vector<vector<bool> > adyacencias(n, vector<bool>(n, false));
+	
+	//Cargo adyacencias
+	getline(file, line); getline(file, line);
+	unsigned int x, y;
+	
+	for(unsigned int i = 0; i < m; i++){
+		aux = file.get(); aux = file.get();
+		getline(file, line, ';');
+		char line_no_const[line.length()];
+		for(int j = 0; j < line.length(); j++) line_no_const[j] = line[j];
+		
+		pch = strtok(line_no_const, " -");
+		x = atoi(pch);
+		pch = strtok(NULL, " -");
+		y = atoi(pch);
+		adyacencias[x][y] = true;
+		adyacencias[y][x] = true;
+	}
+	
+	/*cout << endl << "Adyacencias:" << endl;
+	for(int i = 0; i < n; i++){
+		for(int j = 0; j < n; j++)
+			cout << adyacencias[i][j] << " ";
+		cout << endl;
+	}*/
 	
 	pair <vector<vector<bool> >, vector<vector<bool> > > result;
 	result.first = adyacencias;
@@ -312,4 +334,4 @@ pair <vector<vector<bool> >, vector<vector<bool> > > parsear_entrada(string inpu
 	
 	return result;
 	
-	}
+}

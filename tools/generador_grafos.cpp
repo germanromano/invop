@@ -49,22 +49,24 @@ int main(int argc, char** argv){
 	bool vacia = true;
 	for(unsigned int i = 0; i < k; i++){
 		for(unsigned int j = 0; j < n; j++)
-			if(particion[j].second == i+1){
-				if(!vacia) ofs << ", " << j+1;
+			if(particion[j].second == i){
+				if(!vacia) ofs << ", " << j;
 				else{
 					vacia = false;
 					ofs << endl << "\tsubgraph cluster_" << i << "{" << endl << "\t";
-					ofs << j+1;
+					ofs << j;
 					}
 			}
 		
 		if(!vacia){
 			ofs << ";" << endl;
-			ofs << "\tlabel = \"V" << i+1 << "\";" << endl;
-			ofs << "\tcolor = red;" << endl << "\tpenwidth = 3;" << endl << "\t}" << endl << endl;
+			ofs << "\tlabel = \"V" << i << "\";" << endl;
+			ofs << "\tcolor = red;" << endl << "\tpenwidth = 3;" << endl << "\t}" << endl;
 			vacia = true;
 		}
 	}
+	
+	ofs << endl;
 		
 	for(unsigned int i = 0; i < aristas.size(); i++)
 		ofs << "\t" << aristas[i].first << " -- " << aristas[i].second << ";" << endl;
@@ -78,8 +80,8 @@ vector< pair <int, int> > generar_particion(int n, int k){
 	int dado;
 	vector< pair <int, int> > v;
 	
-	for(int i = 1; i <= n; i++){
-		dado = rand() % k + 1;
+	for(int i = 0; i < n; i++){
+		dado = rand() % k;
 		pair <int, int> ubicacion (i, dado);
 		v.push_back(ubicacion);
 		}
@@ -91,17 +93,11 @@ vector< pair <int, int> > generar_grafo(int n, double p){
 	int dado;
 	vector< pair <int, int> > v;
 	
-	for(int j = 1; j <= n; j++){
-		for (int i = (j+1); i<=n; i++){
+	for(int j = 0; j < n; j++){
+		for (int i = (j+1); i < n; i++){
 			dado = rand() % 1000 + 1; //random entre 1 y 1000
 			if(dado <= p*1000){
 				pair <int, int> link (j, i);
-				v.push_back(link);
-			}
-			
-			dado = rand() % 1000 + 1; //random entre 1 y 1000
-			if(dado <= p*1000){
-				pair <int, int> link (i, j);
 				v.push_back(link);
 			}
 		}
