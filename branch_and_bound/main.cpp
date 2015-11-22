@@ -1,12 +1,21 @@
 #include <ilcplex/ilocplex.h>
 #include <ilcplex/cplex.h>
 ILOSTLBEGIN
+#include <iostream>
+#include <fstream>
+#include <stdlib.h>
 #include <string>
 #include <vector>
+#include <utility>
 
 #define TOL 1E-05
 
-int main(int argc, char **argv) {
+pair <vector<vector<bool> >, vector<vector<bool> > > parsear_entrada(string input_file);
+
+int main(int argc, char *argv[]) {
+  string archivo_entrada(argv[1]);
+  
+  parsear_entrada(archivo_entrada);
 
   // Datos de la instancia de dieta
   int n = 3;
@@ -244,3 +253,63 @@ int main(int argc, char **argv) {
 
   return 0;
 }
+
+pair <vector<vector<bool> >, vector<vector<bool> > > parsear_entrada(string input_file){
+	unsigned int n, m, k;
+	string aux, line;
+	char* pch;
+    ifstream file;
+    
+    file.open(input_file.c_str());
+
+	//Cargo parametros
+	file >> aux;
+	n = atoi(aux.substr(2, aux.length()-2).c_str());
+	file >> aux;
+	m = atoi(aux.substr(2, aux.length()-2).c_str());
+	file >> aux;
+	k = atoi(aux.substr(2, aux.length()-2).c_str());
+	
+	unsigned int x, y;
+	vector<vector<bool> > particion(k, vector<bool>(n, false));
+	
+	//Cargo particion
+	for(unsigned int i = 0; i < k; i++){
+		file >> aux; file >> aux; file >> aux; file >> aux; file >> aux;
+		aux = file.get();
+		
+		//No funciona, chequear
+		/*getline(file, line, ';');
+		pch = strtok(&line, " ,");
+		cout << pch << endl;
+		while (pch != NULL){
+			cout << pch << endl;
+			cout << "HOLA" << endl;
+			pch = strtok(NULL, " ,");
+		}*/
+		
+		//Toma hasta la coma => cuando hay ; no para
+		/*while(aux.compare(";") != 0){
+			aux = file.get();
+			getline(file, aux, ',');
+			x = atoi(aux.c_str());
+			particion[i][x] = true;
+			cout << "LEVANTO NODO " << x << endl;
+			aux = file.get();
+		}*/
+		
+		file >> aux; file >> aux; file >> aux; file >> aux;
+	}
+	
+	
+	vector<vector<bool> > adyacencias(n, vector<bool>(n, false));
+	
+	pair <vector<vector<bool> >, vector<vector<bool> > > result;
+	result.first = adyacencias;
+	result.second = particion;
+	
+    file.close();
+	
+	return result;
+	
+	}
