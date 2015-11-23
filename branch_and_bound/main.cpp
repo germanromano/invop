@@ -16,11 +16,21 @@ int main(int argc, char *argv[]) {
   string archivo_entrada(argv[1]);
   
   pair <vector<vector<bool> >, vector<vector<bool> > > grafo = parsear_entrada(archivo_entrada);
-  vector<vector<bool> > adyacencias = grafo.first; //matriz de adyacencia
-  vector<vector<bool> > particion = grafo.second;  //filas: subconjuntos de la particion. columnas: nodos.
+  vector<vector<bool> > adyacencias = grafo.first; // matriz de adyacencia
+  vector<vector<bool> > particion = grafo.second;  // filas: subconjuntos de la particion. columnas: nodos.
 
-  // Datos de la instancia de dieta
-  int n = 3;
+  // Datos de la instancia
+  // Variables binarias:
+  //		* X_n_j = nodo n pintado con el color j? (son cant_nodos * cant_colores_disponibles variables)
+  //		* W_j	= hay algun nodo pintado con el color j? (son cant_colores_disponibles variables)
+  //
+  // Orden de las (cant_nodos * cant_col + cant_col_disp) variables:
+  //		X_0_0, X_0_1, ... , X_0_(cant_col_disp), X_1_0, ... , X_(cant_nodos)_(cant_col_disp), W_0, ... , W(cant_col_disp)
+  
+  int cant_nodos = adyacencias.size();
+  int cant_colores_disponibles = particion.size(); // cant colores usados <= cant de subconjuntos de la particion
+  
+  int n = cant_nodos * cant_colores_disponibles + cant_colores_disponibles; // n = cant de variables
   double costo[] = {1.8, 2.3,1.5};
   double calorias[] = {170,50,300};
   double calcio[] = {3,400,40};
