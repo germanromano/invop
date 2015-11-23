@@ -21,17 +21,16 @@ int main(int argc, char *argv[]) {
 
   // Datos de la instancia
   // Variables binarias:
-  //		* X_n_j = nodo n pintado con el color j? (son cant_nodos * cant_colores_disponibles variables)
-  //		* W_j	= hay algun nodo pintado con el color j? (son cant_colores_disponibles variables)
+  //		* X_n_j = nodo n pintado con el color j? (son cant_nodos * cant_colores_disp variables)
+  //		* W_j	= hay algun nodo pintado con el color j? (son cant_colores_disp variables)
   //
   // Orden de las (cant_nodos * cant_col + cant_col_disp) variables:
   //		X_0_0, X_0_1, ... , X_0_(cant_col_disp), X_1_0, ... , X_(cant_nodos)_(cant_col_disp), W_0, ... , W(cant_col_disp)
   
   int cant_nodos = adyacencias.size();
-  int cant_colores_disponibles = particion.size(); // cant colores usados <= cant de subconjuntos de la particion
+  int cant_colores_disp = particion.size(); // cant colores usados <= cant de subconjuntos de la particion
   
-  int n = cant_nodos * cant_colores_disponibles + cant_colores_disponibles; // n = cant de variables
-  double costo[] = {1.8, 2.3,1.5};
+  int n = cant_nodos * cant_colores_disp + cant_colores_disp; // n = cant de variables
   double calorias[] = {170,50,300};
   double calcio[] = {3,400,40};
   double minCalorias = 2000;
@@ -73,24 +72,25 @@ int main(int argc, char *argv[]) {
   xctype = new char[n];
   colnames = new char*[n];
   
-  for (int i = 0; i < n; i++) {
-    ub[i] = CPX_INFBOUND;
-    lb[i] = 0.0;
-    objfun[i] = costo[i];
-    xctype[i] = 'C'; // 'C' es continua, 'B' binaria, 'I' Entera. Para LP (no enteros), este parametro tiene que pasarse como NULL. No lo vamos a usar por ahora.
+  // Defino las variables X_n_j
+  for (int i = 0; i < n - cant_colores_disp; i++) {
+    ub[i] = 1;
+    lb[i] = 0;
+    objfun[i] = 0; 		// Estas var no figuran en la funcion objetivo
+    xctype[i] = 'B'; 	// 'C' es continua, 'B' binaria, 'I' Entera. Para LP (no enteros), este parametro tiene que pasarse como NULL. No lo vamos a usar por ahora.
     colnames[i] = new char[10];
+    sprintf(colnames[i], "X_"); // TODO: concatenar num de nodo y de color
   }
-
-  // Nombre de la variable x_m
-  sprintf(colnames[0],"x_m");
-
-  // Nombre de la variable x_l y cota inferior
-  lb[1] = 2;
-  sprintf(colnames[1],"x_l");
-
-  // Nombre de la variable x_p y cota superior
-  ub[2] = 3;
-  sprintf(colnames[2],"x_p");
+  
+  // Defino las variables W_j
+  for (int i = n - cant_colores_disp; i < n; i++) {
+    ub[i] = 1;
+    lb[i] = 0;
+    objfun[i] = 1;
+    xctype[i] = 'B'; // 'C' es continua, 'B' binaria, 'I' Entera. Para LP (no enteros), este parametro tiene que pasarse como NULL. No lo vamos a usar por ahora.
+    colnames[i] = new char[10];
+    sprintf(colnames[i], "W_"); // TODO: concatenar num de color
+  }
   
   // Agrego las columnas.
   status = CPXnewcols(env, lp, n, objfun, lb, ub, NULL, colnames);
@@ -120,6 +120,9 @@ int main(int argc, char *argv[]) {
   // ccnt = numero nuevo de columnas en las restricciones.
   // rcnt = cuantas restricciones se estan agregando.
   // nzcnt = # de coeficientes != 0 a ser agregados a la matriz. Solo se pasan los valores que no son cero.
+
+  // Restricciones a agregar:
+  //	* 
 
   int ccnt = 0, rcnt = 3, nzcnt = 0; 
 
