@@ -19,15 +19,17 @@ int main(int argc, char *argv[]) {
   vector<vector<bool> > adyacencias = grafo.first; // matriz de adyacencia
   vector<vector<bool> > particion = grafo.second;  // filas: subconjuntos de la particion. columnas: nodos.
 
-  // Datos de la instancia
   // Variables binarias:
   //		* X_n_j = nodo n pintado con el color j? (son cant_nodos * cant_colores_disp variables)
   //		* W_j	= hay algun nodo pintado con el color j? (son cant_colores_disp variables)
+  //			=> TOTAL: (cant_nodos * cant_col + cant_col_disp) variables
   //
-  // Orden de las (cant_nodos * cant_col + cant_col_disp) variables:
+  // Orden de las variables:
   //		X_0_0, X_0_1, ... , X_0_(cant_col_disp), X_1_0, ... , X_(cant_nodos)_(cant_col_disp), W_0, ... , W(cant_col_disp)
   
   int cant_nodos = adyacencias.size();
+  int cant_ejes = 0; // TODO: devolver cantidad de ejes
+  int cant_subconj_particion = particion.size(); //cant de subconjuntos de la particion
   int cant_colores_disp = particion.size(); // cant colores usados <= cant de subconjuntos de la particion
   
   int n = cant_nodos * cant_colores_disp + cant_colores_disp; // n = cant de variables
@@ -62,8 +64,6 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-    
-  // Definimos las variables. No es obligatorio pasar los nombres de las variables, pero facilita el debug. La info es la siguiente:
   double *ub, *lb, *objfun; // Cota superior, cota inferior, coeficiente de la funcion objetivo.
   char *xctype, **colnames; // tipo de la variable (por ahora son siempre continuas), string con el nombre de la variable.
   ub = new double[n]; 
@@ -76,8 +76,8 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < n - cant_colores_disp; i++) {
     ub[i] = 1;
     lb[i] = 0;
-    objfun[i] = 0; 		// Estas var no figuran en la funcion objetivo
-    xctype[i] = 'B'; 	// 'C' es continua, 'B' binaria, 'I' Entera. Para LP (no enteros), este parametro tiene que pasarse como NULL. No lo vamos a usar por ahora.
+    objfun[i] = 0; // Estas var no figuran en la funcion objetivo
+    xctype[i] = 'B';
     colnames[i] = new char[10];
     sprintf(colnames[i], "X_"); // TODO: concatenar num de nodo y de color
   }
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
     ub[i] = 1;
     lb[i] = 0;
     objfun[i] = 1;
-    xctype[i] = 'B'; // 'C' es continua, 'B' binaria, 'I' Entera. Para LP (no enteros), este parametro tiene que pasarse como NULL. No lo vamos a usar por ahora.
+    xctype[i] = 'B';
     colnames[i] = new char[10];
     sprintf(colnames[i], "W_"); // TODO: concatenar num de color
   }
@@ -111,18 +111,15 @@ int main(int argc, char *argv[]) {
   delete[] xctype;
   delete[] colnames;
 
-
-  // CPLEX por defecto minimiza. Le cambiamos el sentido a la funcion objetivo si se quiere maximizar.
-  // CPXchgobjsen(env, lp, CPX_MAX);
-
-  // Generamos de a una las restricciones.
-  // Estos valores indican:
   // ccnt = numero nuevo de columnas en las restricciones.
   // rcnt = cuantas restricciones se estan agregando.
   // nzcnt = # de coeficientes != 0 a ser agregados a la matriz. Solo se pasan los valores que no son cero.
 
-  // Restricciones a agregar:
-  //	* 
+  // Restricciones:
+  //	1) Nodos adyacentes tienen distinto color (cant_ejes restricciones)
+  //	2) Cada nodo tiene a lo sumo un color (cant_nodos restricciones)
+  //	3) Solo un nodo de cada subconj. de la particion tiene color (cant. de subconj. de la particion restricciones)
+  //		=> TOTAL: (cant_ejes + cant_nodos + cant_subconj_particion) restricciones
 
   int ccnt = 0, rcnt = 3, nzcnt = 0; 
 
