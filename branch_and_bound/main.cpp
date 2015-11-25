@@ -4,21 +4,23 @@ ILOSTLBEGIN
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string>
 #include <vector>
 #include <utility>
 
 #define TOL 1E-05
 
-pair <vector<vector<bool> >, vector<vector<bool> > > parsear_entrada(string input_file);
+pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file);
 
 int main(int argc, char *argv[]) {
   string archivo_entrada(argv[1]);
   
-  pair <vector<vector<bool> >, vector<vector<bool> > > grafo = parsear_entrada(archivo_entrada);
-  vector<vector<bool> > adyacencias = grafo.first; // matriz de adyacencia
-  vector<vector<bool> > particion = grafo.second;  // filas: subconjuntos de la particion. columnas: nodos.
-
+  pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > grafo = parsear_entrada(archivo_entrada);
+  int cant_ejes = grafo.first;
+  vector<vector<bool> > adyacencias = grafo.second.first; // matriz de adyacencia
+  vector<vector<bool> > particion = grafo.second.second;  // filas: subconjuntos de la particion. columnas: nodos.
+  
   // Variables binarias:
   //		* X_n_j = nodo n pintado con el color j? (son cant_nodos * cant_colores_disp variables)
   //		* W_j	= hay algun nodo pintado con el color j? (son cant_colores_disp variables)
@@ -28,7 +30,6 @@ int main(int argc, char *argv[]) {
   //		X_0_0, X_0_1, ... , X_0_(cant_col_disp), X_1_0, ... , X_(cant_nodos)_(cant_col_disp), W_0, ... , W(cant_col_disp)
   
   int cant_nodos = adyacencias.size();
-  int cant_ejes = 0; // TODO: devolver cantidad de ejes
   int cant_subconj_particion = particion.size(); //cant de subconjuntos de la particion
   int cant_colores_disp = particion.size(); // cant colores usados <= cant de subconjuntos de la particion
   
@@ -79,7 +80,10 @@ int main(int argc, char *argv[]) {
     objfun[i] = 0; // Estas var no figuran en la funcion objetivo
     xctype[i] = 'B';
     colnames[i] = new char[10];
-    sprintf(colnames[i], "X_"); // TODO: concatenar num de nodo y de color
+    sprintf(colnames[i], "X_");
+    //itoa(i / cant_colores_disp, colnames[i] + strlen(colnames[i]), 10);	//TODO: concatenar strings
+	//sprintf(colnames[i] + strlen(colnames[i]), "_");
+	//itoa(i % cant_colores_disp, colnames[i] + strlen(colnames[i]), 10);
   }
   
   // Defino las variables W_j
@@ -89,7 +93,8 @@ int main(int argc, char *argv[]) {
     objfun[i] = 1;
     xctype[i] = 'B';
     colnames[i] = new char[10];
-    sprintf(colnames[i], "W_"); // TODO: concatenar num de color
+    sprintf(colnames[i], "W_");
+	//sprintf(colnames[i] + strlen(colnames[i]), itoa(i));	//TODO: concatenar strings
   }
   
   // Agrego las columnas.
@@ -116,51 +121,50 @@ int main(int argc, char *argv[]) {
   // nzcnt = # de coeficientes != 0 a ser agregados a la matriz. Solo se pasan los valores que no son cero.
 
   // Restricciones:
-  //	1) Nodos adyacentes tienen distinto color (cant_ejes restricciones)
-  //	2) Cada nodo tiene a lo sumo un color (cant_nodos restricciones)
-  //	3) Solo un nodo de cada subconj. de la particion tiene color (cant. de subconj. de la particion restricciones)
+  //	(1) Nodos adyacentes tienen distinto color (cant_ejes restricciones por <=)
+  //	(2) Cada nodo tiene a lo sumo un color (cant_nodos restricciones por =)
+  //	(3) Solo un nodo de cada subconj. de la particion tiene color (cant. de subconj. de la particion restricciones por <=)
   //		=> TOTAL: (cant_ejes + cant_nodos + cant_subconj_particion) restricciones
 
-  int ccnt = 0, rcnt = 3, nzcnt = 0; 
+  int ccnt = 0, rcnt = cant_ejes + cant_nodos + cant_subconj_particion, nzcnt = 0; 
 
-  char sense[] = {'G','L','G'}; // Sentido de la desigualdad. 'G' es mayor o igual y 'E' para igualdad.
+  char sense[rcnt]; // Sentido de la desigualdad. 'G' es mayor o igual y 'E' para igualdad.
+  for(unsigned int i = 0; i < cant_ejes; i++)
+	  sense[i] = 'L';
+  for(unsigned int i = cant_ejes; i < cant_ejes + cant_nodos; i++)
+	  sense[i] = 'E';
+  for(unsigned int i = cant_ejes + cant_nodos; i < cant_ejes + cant_nodos + cant_subconj_particion; i++)
+	  sense[i] = 'L';
 
   double *rhs = new double[rcnt]; // Termino independiente de las restricciones.
   int *matbeg = new int[rcnt]; //Posicion en la que comienza cada restriccion en matind y matval.
-  int *matind = new int[3*n]; // Array con los indices de las variables con coeficientes != 0 en la desigualdad.
-  double *matval = new double[3*n]; // Array que en la posicion i tiene coeficiente ( != 0) de la variable cutind[i] en la restriccion.
+  int *matind = new int[rcnt*n]; // Array con los indices de las variables con coeficientes != 0 en la desigualdad.
+  double *matval = new double[rcnt*n]; // Array que en la posicion i tiene coeficiente ( != 0) de la variable cutind[i] en la restriccion.
 
   // Podria ser que algun coeficiente sea cero. Pero a los sumo vamos a tener 3*n coeficientes. CPLEX va a leer hasta la cantidad
   // nzcnt que le pasemos.
 
-
-  //Restriccion de minimas calorias (asume que no hay coeficientes nulos; en caso de haberlos, agregar "if calorias[i] =! 0 ...")
-  matbeg[0] = nzcnt;
-  rhs[0] = minCalorias;
-  for (int i = 0; i < n; i++) {
-     matind[nzcnt] = i;
-     matval[nzcnt] = calorias[i];
-     nzcnt++;
-  }
-
-  //Restriccion de maximas calorias
-  matbeg[1] = nzcnt;
-  rhs[1] = maxCalorias;
-  for (int i = 0; i < n; i++) {
-     matind[nzcnt] = i;
-     matval[nzcnt] = calorias[i];
-     nzcnt++;
-  }
-
-  //Restriccion de minimo calcio
-  matbeg[2] = nzcnt;
-  rhs[2] = minCalcio;
-  for (int i = 0; i < n; i++) {
-     matind[nzcnt] = i;
-     matval[nzcnt] = calcio[i];
-     nzcnt++;
-  }
-
+  //Restriccion de minimo calcio (asume que no hay coeficientes nulos; en caso de haberlos, agregar "if calorias[i] =! 0 ...")
+  //matbeg[2] = nzcnt;
+  //rhs[2] = minCalcio;
+  //for (int i = 0; i < n; i++) {
+  //   matind[nzcnt] = i;
+  //   matval[nzcnt] = calcio[i];
+  //   nzcnt++;
+  //}
+  
+  //Restricciones (1)
+  for(unsigned int i = 0; i < cant_ejes; i++)
+	  rhs[i] = 1;
+  
+  for(unsigned int i = 0; i < cant_nodos; i++)
+	  for(unsigned int j = i+1; j < cant_nodos; j++)
+		  if(adyacencias[i][j]){
+			  //matbeg[??] = nzcnt; VER  CÓMO SE VAN A ENUMERAR LAS RESTRICCIONES
+			  //cargo una de las variables participantes de la restr. en matind y matval, luego nzcnt++
+			  //idem con la otra variable, luego nzcnt++
+			  }
+  /*
   // Esta rutina agrega la restriccion al lp.
   status = CPXaddrows(env, lp, ccnt, rcnt, nzcnt, rhs, sense, matbeg, matind, matval, NULL, NULL);
       
@@ -240,7 +244,6 @@ int main(int argc, char *argv[]) {
   std::string outputfile = "dieta.sol";
   ofstream solfile(outputfile.c_str());
 
-
   // Tomamos los valores de todas las variables. Estan numeradas de 0 a n-1.
   double *sol = new double[n];
   status = CPXgetx(env, lp, sol, 0, n - 1);
@@ -250,7 +253,6 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-    
   // Solo escribimos las variables distintas de cero (tolerancia, 1E-05).
   solfile << "Status de la solucion: " << statstr << endl;
   for (int i = 0; i < n; i++) {
@@ -259,14 +261,13 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  
   delete [] sol;
   solfile.close();
-
+	*/
   return 0;
 }
 
-pair <vector<vector<bool> >, vector<vector<bool> > > parsear_entrada(string input_file){
+pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file){
 	unsigned int n, m, k;
 	string aux, line;
 	char* pch;
@@ -336,9 +337,13 @@ pair <vector<vector<bool> >, vector<vector<bool> > > parsear_entrada(string inpu
 		cout << endl;
 	}*/
 	
-	pair <vector<vector<bool> >, vector<vector<bool> > > result;
-	result.first = adyacencias;
-	result.second = particion;
+	pair <vector<vector<bool> >, vector<vector<bool> > > matrices;
+	matrices.first = adyacencias;
+	matrices.second = particion;
+	
+	pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > result;
+	result.first = m;
+	result.second = matrices;
 	
     file.close();
 	
