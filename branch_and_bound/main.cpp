@@ -86,7 +86,12 @@ int main(int argc, char *argv[]) {
 		sprintf(colnames[i], "W_%d", i - (n - cant_colores_disp));
 	}
 	
+	// TODO:	-SETEAR BRANCH AND BOUND
+	//			-SETEAR VAR. ENTERAS
+	
+	
 	// Agrego las columnas.
+	//status = CPXnewcols(env, lp, n, objfun, lb, ub, xctype, colnames);
 	status = CPXnewcols(env, lp, n, objfun, lb, ub, NULL, colnames);
 	
 	if (status) {
