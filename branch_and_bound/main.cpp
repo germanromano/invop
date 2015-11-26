@@ -86,13 +86,8 @@ int main(int argc, char *argv[]) {
 		sprintf(colnames[i], "W_%d", i - (n - cant_colores_disp));
 	}
 	
-	// TODO:	-SETEAR BRANCH AND BOUND
-	//			-SETEAR VAR. ENTERAS
-	
-	
 	// Agrego las columnas.
-	//status = CPXnewcols(env, lp, n, objfun, lb, ub, xctype, colnames);
-	status = CPXnewcols(env, lp, n, objfun, lb, ub, NULL, colnames);
+	status = CPXnewcols(env, lp, n, objfun, lb, ub, xctype, colnames);
 	
 	if (status) {
 		cerr << "Problema agregando las variables CPXnewcols" << endl;
@@ -255,13 +250,22 @@ int main(int argc, char *argv[]) {
 		cerr << "Problema escribiendo modelo" << endl;
 		exit(1);
 	}
-		
+	
+	//TUNNING
+	//Para que haga Branch & Bound:
+	CPXsetintparam(env, CPX_PARAM_MIPSEARCH, CPX_MIPSEARCH_TRADITIONAL);
+	//Para facilitar la comparación evitamos paralelismo:
+	CPXsetintparam(env, CPX_PARAM_THREADS, 1);
+	//Para que no se adicionen planos de corte:
+	CPXsetintparam(env,CPX_PARAM_EACHCUTLIM, 0);
+	CPXsetintparam(env, CPX_PARAM_FRACCUTS, -1);
+	
 	// Tomamos el tiempo de resolucion utilizando CPXgettime.
 	double inittime, endtime;
 	status = CPXgettime(env, &inittime);
 
 	// Optimizamos el problema.
-	status = CPXlpopt(env, lp);
+	status = CPXmipopt(env, lp);
 
 	status = CPXgettime(env, &endtime);
 
@@ -278,19 +282,21 @@ int main(int argc, char *argv[]) {
 	p = CPXgetstatstring(env, solstat, statstring);
 	string statstr(statstring);
 	cout << endl << "Resultado de la optimizacion: " << statstring << endl;
-	if(solstat!=CPX_STAT_OPTIMAL){
-		 exit(1);
-	}	
-		
+	
+	if(solstat!=CPXMIP_OPTIMAL && solstat!=CPXMIP_OPTIMAL_TOL &&
+		solstat!=CPXMIP_NODE_LIM_FEAS && solstat!=CPXMIP_TIME_LIM_FEAS){
+			exit(1);
+	}
+	
 	double objval;
-	status = CPXgetobjval(env, lp, &objval);
+	status = CPXgetmipobjval(env, lp, &objval);
 		
 	if (status) {
 		cerr << "Problema obteniendo valor de mejor solucion." << endl;
 		exit(1);
 	}
 		
-	cout << "Optimo: " << objval << "\t(Time: " << (endtime - inittime) << ")" << endl; 
+	cout << "Optimo: " << objval << "\t(Time: " << (endtime - inittime) << " sec)" << endl; 
 
 	// Tomamos los valores de la solucion y los escribimos a un archivo.
 	std::string outputfile = "output.sol";
@@ -298,7 +304,7 @@ int main(int argc, char *argv[]) {
 
 	// Tomamos los valores de todas las variables. Estan numeradas de 0 a n-1.
 	double *sol = new double[n];
-	status = CPXgetx(env, lp, sol, 0, n - 1);
+	status = CPXgetmipx(env, lp, sol, 0, n - 1);
 
 	if (status) {
 		cerr << "Problema obteniendo la solucion del LP." << endl;
