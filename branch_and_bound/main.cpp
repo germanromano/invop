@@ -135,18 +135,6 @@ int main(int argc, char *argv[]) {
 	int *matind = new int[rcnt*n]; // Array con los indices de las variables con coeficientes != 0 en la desigualdad.
 	double *matval = new double[rcnt*n]; // Array que en la posicion i tiene coeficiente ( != 0) de la variable cutind[i] en la restriccion.
 
-	// Podria ser que algun coeficiente sea cero. Pero a los sumo vamos a tener 3*n coeficientes. CPLEX va a leer hasta la cantidad
-	// nzcnt que le pasemos.
-
-	//Restriccion de minimo calcio (asume que no hay coeficientes nulos; en caso de haberlos, agregar "if calorias[i] =! 0 ...")
-	//matbeg[2] = nzcnt;
-	//rhs[2] = minCalcio;
-	//for (int i = 0; i < n; i++) {
-	//	 matind[nzcnt] = i;
-	//	 matval[nzcnt] = calcio[i];
-	//	 nzcnt++;
-	//}
-	
 	//El termino indep. de restr (1), (2) y (3) es 1
 	for(unsigned int i = 0; i < rcnt - cant_colores_disp; i++)
 		rhs[i] = 1;
@@ -252,13 +240,13 @@ int main(int argc, char *argv[]) {
 	}
 	
 	//TUNNING
-	//Para que haga Branch & Bound:
+	//Para que haga Branch & Cut:
 	CPXsetintparam(env, CPX_PARAM_MIPSEARCH, CPX_MIPSEARCH_TRADITIONAL);
-	//Para facilitar la comparación evitamos paralelismo:
-	CPXsetintparam(env, CPX_PARAM_THREADS, 1);
-	//Para que no se adicionen planos de corte:
+	//Para que no se adicionen planos de corte: ( => Branch & Bound)
 	CPXsetintparam(env,CPX_PARAM_EACHCUTLIM, 0);
 	CPXsetintparam(env, CPX_PARAM_FRACCUTS, -1);
+	//Para facilitar la comparación evitamos paralelismo:
+	CPXsetintparam(env, CPX_PARAM_THREADS, 1);
 	
 	// Tomamos el tiempo de resolucion utilizando CPXgettime.
 	double inittime, endtime;
@@ -367,13 +355,6 @@ pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada
 		
 		getline(file, line); getline(file, line); getline(file, line);
 	}
-
-	/*cout << "Particion:" << endl;
-	for(int i = 0; i < particion.size(); i++){
-		for(int j = 0; j < particion[i].size(); j++)
-			cout << particion[i][j] << " ";
-		cout << endl;
-	}*/
 	
 	vector<vector<bool> > adyacencias(n, vector<bool>(n, false));
 	
@@ -395,13 +376,6 @@ pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada
 		adyacencias[y][x] = true;
 	}
 	
-	/*cout << endl << "Adyacencias:" << endl;
-	for(int i = 0; i < n; i++){
-		for(int j = 0; j < n; j++)
-			cout << adyacencias[i][j] << " ";
-		cout << endl;
-	}*/
-	
 	pair <vector<vector<bool> >, vector<vector<bool> > > matrices;
 	matrices.first = adyacencias;
 	matrices.second = particion;
@@ -410,8 +384,7 @@ pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada
 	result.first = m;
 	result.second = matrices;
 	
-		file.close();
+	file.close();
 	
-	return result;
-	
+	return result;	
 }
