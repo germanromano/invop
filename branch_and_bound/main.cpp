@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
 	//
 	// Orden de las variables:
 	//		X_0_0, X_0_1, ... , X_0_(cant_col_disp), X_1_0, ... , X_(cant_nodos)_(cant_col_disp), W_0, ... , W(cant_col_disp)
+
 	
 	int cant_nodos = adyacencias.size();
 	int cant_subconj_particion = particion.size(); //cant de subconjuntos de la particion
@@ -57,6 +58,13 @@ int main(int argc, char *argv[]) {
 		cerr << "Error creando el LP" << endl;
 		exit(1);
 	}
+
+	//Seteo de parametros que mando Paula por mail.
+	CPXsetintparam(env,CPX_PARAM_PRESLVND, -1);
+	CPXsetintparam(env,CPX_PARAM_REPEATPRESOLVE, 0);
+	CPXsetintparam(env,CPX_PARAM_RELAXPREIND, 0);
+	CPXsetintparam(env,CPX_PARAM_REDUCE, 0);
+	CPXsetintparam(env,CPX_PARAM_LANDPCUTS, -1);
 
 	double *ub, *lb, *objfun; // Cota superior, cota inferior, coeficiente de la funcion objetivo.
 	char *xctype, **colnames; // tipo de la variable (por ahora son siempre continuas), string con el nombre de la variable.
