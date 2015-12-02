@@ -255,6 +255,12 @@ int main(int argc, char *argv[]) {
 	CPXsetintparam(env, CPX_PARAM_FRACCUTS, -1);
 	//Para facilitar la comparación evitamos paralelismo:
 	CPXsetintparam(env, CPX_PARAM_THREADS, 1);
+	//Para desactivar preprocesamiento
+	CPXsetintparam(env, CPX_PARAM_PRESLVND, -1);
+	CPXsetintparam(env, CPX_PARAM_REPEATPRESOLVE, 0);
+	CPXsetintparam(env, CPX_PARAM_RELAXPREIND, 0);
+	CPXsetintparam(env, CPX_PARAM_REDUCE, 0);
+	CPXsetintparam(env, CPX_PARAM_LANDPCUTS, -1);
 	
 	// Tomamos el tiempo de resolucion utilizando CPXgettime.
 	double inittime, endtime;
