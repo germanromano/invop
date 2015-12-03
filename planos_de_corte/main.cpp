@@ -8,19 +8,25 @@ ILOSTLBEGIN
 #include <string>
 #include <vector>
 #include <utility>
+#include <math.h> 
 
 #define TOL 1E-05
 
 pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file);
+bool agregar_plano_clique(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
+bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
+vector<int> obtener_clique_maximal(adyacencias);
+vector<int> obtener_agujero_impar(adyacencias);
 
 int main(int argc, char *argv[]) {
 	
-	if(argc < 2){
-		cerr << "Uso: input_file" << endl;
+	if(argc < 3){
+		cerr << "Uso: input_file max_iteraciones" << endl;
 		exit(1);
 	}
 	
 	string archivo_entrada(argv[1]);
+	int max_iteraciones = atoi(argv[2]);
 	
 	pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > grafo = parsear_entrada(archivo_entrada);
 	int cant_ejes = grafo.first;
@@ -64,7 +70,7 @@ int main(int argc, char *argv[]) {
 		cerr << "Error creando el LP" << endl;
 		exit(1);
 	}
-
+	
 	//TUNNING
 	//Para que haga Branch & Cut:
 	CPXsetintparam(env, CPX_PARAM_MIPSEARCH, CPX_MIPSEARCH_TRADITIONAL);
@@ -93,7 +99,7 @@ int main(int argc, char *argv[]) {
 		ub[i] = 1;
 		lb[i] = 0;
 		objfun[i] = 0; // Estas var no figuran en la funcion objetivo
-		xctype[i] = 'B';
+		xctype[i] = 'C';
 		colnames[i] = new char[10];
 		sprintf(colnames[i], "X_%d_%d", i / cant_colores_disp, i % cant_colores_disp);
 	}
@@ -103,13 +109,13 @@ int main(int argc, char *argv[]) {
 		ub[i] = 1;
 		lb[i] = 0;
 		objfun[i] = 1;
-		xctype[i] = 'B';
+		xctype[i] = 'C';
 		colnames[i] = new char[10];
 		sprintf(colnames[i], "W_%d", i - (n - cant_colores_disp));
 	}
 	
 	// Agrego las columnas.
-	status = CPXnewcols(env, lp, n, objfun, lb, ub, xctype, colnames);
+	status = CPXnewcols(env, lp, n, objfun, lb, ub, NULL, colnames);
 	
 	if (status) {
 		cerr << "Problema agregando las variables CPXnewcols" << endl;
@@ -224,7 +230,7 @@ int main(int argc, char *argv[]) {
 	
 	// Esta rutina agrega la restriccion al lp.
 	status = CPXaddrows(env, lp, ccnt, rcnt, nzcnt, rhs, sense, matbeg, matind, matval, NULL, NULL);
-			
+	
 	if (status) {
 		cerr << "Problema agregando restricciones." << endl;
 		exit(1);
@@ -261,21 +267,81 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	
+//----------------------- PRIMER ITERACION DE RESOLUCIÓN DEL LP
+	
 	// Tomamos el tiempo de resolucion utilizando CPXgettime.
-	double inittime, endtime;
+	double inittime, endtime, fractpart, intpart, opt_anterior, opt_actual;
+	int cant_iteraciones = 0;
 	status = CPXgettime(env, &inittime);
-
-	// Optimizamos el problema.
-	status = CPXmipopt(env, lp);
-
-	status = CPXgettime(env, &endtime);
-
+	
+	bool criterio_de_corte, todas_enteras, hubo_plano = true;
+	
+	status = CPXlpopt(env, lp);
 	if (status) {
 		cerr << "Problema optimizando CPLEX" << endl;
 		exit(1);
 	}
+	
+	status = CPXgetobjval(env, lp, &opt_actual);
+	if (status) {
+		cerr << "Problema obteniendo valor de mejor solucion." << endl;
+		exit(1);
+	}
+	
+	double *sol = new double[n];
+	status = CPXgetx(env, lp, sol, 0, n - 1);
+	if (status) {
+		cerr << "Problema obteniendo la solucion del LP." << endl;
+		exit(1);
+	}
 
-	// Chequeamos el estado de la solucion.
+	// Chequeo si la solución es entera
+	for (int i = 0; i < n; i++){
+		fractpart = modf(sol[i] , &intpart);
+		if (fractpart > TOL){
+			todas_enteras = false;
+			break;
+			}
+		}
+	
+	criterio_de_corte = todas_enteras;
+
+//----------------------- INICIO CICLO DE RESOLUCIÓN DEL LP
+	while(!criterio_de_corte){
+		opt_anterior = opt_actual;
+		
+		//hubo_plano = agregar_plano_clique();
+		//hubo_plano = hubo_plano || agregar_plano_agujero();
+		
+		hubo_plano = false;
+		todas_enteras = true;
+		
+		if(hubo_plano){
+			status = CPXlpopt(env, lp);
+			for (int i = 0; i < n; i++){
+				fractpart = modf(sol[i] , &intpart);
+				if (fractpart > TOL){
+					todas_enteras = false;
+					break;
+				}
+			}
+		}
+		
+		status = CPXgetobjval(env, lp, &opt_actual);
+		if (status) {
+			cerr << "Problema obteniendo valor de mejor solucion." << endl;
+			exit(1);
+		}
+		
+		cant_iteraciones++;
+		criterio_de_corte = !hubo_plano || todas_enteras || abs(opt_actual - opt_anterior) > TOL
+								|| (cant_iteraciones > max_iteraciones);
+	}
+
+	status = CPXgettime(env, &endtime);
+
+//----------------------- FIN CICLO DE RESOLUCIÓN DEL LP
+
 	int solstat;
 	char statstring[510];
 	CPXCHARptr p;
@@ -284,13 +350,10 @@ int main(int argc, char *argv[]) {
 	string statstr(statstring);
 	cout << endl << "Resultado de la optimizacion: " << statstring << endl;
 	
-	if(solstat!=CPXMIP_OPTIMAL && solstat!=CPXMIP_OPTIMAL_TOL &&
-		solstat!=CPXMIP_NODE_LIM_FEAS && solstat!=CPXMIP_TIME_LIM_FEAS){
-			exit(1);
-	}
+	if(solstat!=CPX_STAT_OPTIMAL) exit(1);
 	
 	double objval;
-	status = CPXgetmipobjval(env, lp, &objval);
+	status = CPXgetobjval(env, lp, &objval);
 		
 	if (status) {
 		cerr << "Problema obteniendo valor de mejor solucion." << endl;
@@ -304,8 +367,7 @@ int main(int argc, char *argv[]) {
 	ofstream solfile(outputfile.c_str());
 
 	// Tomamos los valores de todas las variables. Estan numeradas de 0 a n-1.
-	double *sol = new double[n];
-	status = CPXgetmipx(env, lp, sol, 0, n - 1);
+	status = CPXgetx(env, lp, sol, 0, n - 1);
 
 	if (status) {
 		cerr << "Problema obteniendo la solucion del LP." << endl;
@@ -331,6 +393,39 @@ int main(int argc, char *argv[]) {
 	solfile.close();
 	
 	return 0;
+}
+
+bool agregar_plano_clique(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol){
+	bool res = false;
+	vector<int> clique = obtener_clique_maximal(adyacencias); //TO DO: heuristica
+	sum = 0;
+	for(int j=0; j < cant_colores_disp; j++){
+		for(int p=0; p < clique.size(); p++){
+			sum = sum sol[p*cant_colores_disp + j]
+		}
+		if (sum > sol[sol.length() - cant_colores_disp + j + 1]){
+			//agregar restriccion con CPXaddrow()
+			res = true;
+		}
+	}
+	return res;
+}
+
+bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol){
+	bool res = false;
+	vector<int> agujero = obtener_agujero_impar(adyacencias); //TO DO: heuristica
+	k = (agujero.size()-1)/2;
+	sum = 0;
+	for(int j=0; j < cant_colores_disp; j++){
+		for(int p=0; p < agujero.size(); p++){
+			sum = sum sol[p*cant_colores_disp + j]
+		}
+		if (sum > k*sol[sol.length() - cant_colores_disp + j + 1]){
+			//agregar restriccion con CPXaddrow()
+			res = true;
+		}
+	}
+	return res;
 }
 
 pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file){
