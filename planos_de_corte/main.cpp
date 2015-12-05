@@ -16,7 +16,7 @@ pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada
 //bool agregar_plano_clique(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
 //bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
 
-//Algoritmo de Bron-Kerbosch para hallar cliques maximales:
+//Algoritmo de Bron-Kerbosch para hallar cliques maximales (exacto):
 void  bron_kerbosch(bool R[], bool P[], bool X[], const vector<vector<bool> > *adyacencias, vector<vector<int> > *cliques);
 
 int main(int argc, char *argv[]) {
@@ -358,13 +358,14 @@ int main(int argc, char *argv[]) {
 
 	bron_kerbosch(R, P, X, &adyacencias, &cliques);
 	
-	cout << "Cliques maximales del grafo" << endl;
+	cout << "Cliques maximales del grafo:" << endl << endl;
 	for(unsigned int i = 0; i < cliques.size(); i++){
 		cout << "Clique: ";
 		for(unsigned int j = 0; j < cliques[i].size(); j++)
 			cout << cliques[i][j] << " ";
 		cout << endl;
 		}
+	cout << endl  << "Cantidad de cliques maximales: " << cliques.size() << endl;
 //----------------------- FIN TEST DE BRON-KERBOSCH*/
 
 	int solstat;
@@ -420,9 +421,13 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
+// ACTUALIZAR LAS SIGUIENTES FUNCIONES:
+// -Las cliques y agujeros se calculan una única vez, fuera del ciclo
+// -Al buscar desigualdades violadas, se chequean todas las cliques/agujeros, o sólo "algunas"?
+
 /*bool agregar_plano_clique(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol){
 	bool res = false;
-	vector<int> clique = obtener_clique_maximal(adyacencias); //TO DO: heuristica
+	vector<int> clique = obtener_clique_maximal(adyacencias);
 	sum = 0;
 	for(int j=0; j < cant_colores_disp; j++){
 		for(int p=0; p < clique.size(); p++){
