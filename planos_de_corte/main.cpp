@@ -8,15 +8,16 @@ ILOSTLBEGIN
 #include <string>
 #include <vector>
 #include <utility>
-#include <math.h> 
+#include <math.h>
 
 #define TOL 1E-05
 
 pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file);
-bool agregar_plano_clique(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
-bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
-vector<int> obtener_clique_maximal(adyacencias);
-vector<int> obtener_agujero_impar(adyacencias);
+//bool agregar_plano_clique(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
+//bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
+
+//Algoritmo de Bron-Kerbosch para hallar cliques maximales:
+void  bron_kerbosch(bool R[], bool P[], bool X[], const vector<vector<bool> > *adyacencias, vector<vector<int> > *cliques);
 
 int main(int argc, char *argv[]) {
 	
@@ -242,8 +243,8 @@ int main(int argc, char *argv[]) {
 	delete[] matval;
 
 	// Seteo de algunos parametros.
-	// Para desactivar la salida poner CPX_OFF.
-	status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
+	// Para desactivar la salida poner CPX_OFF. Para activar: CPX_ON.
+	status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
 		
 	if (status) {
 		cerr << "Problema seteando SCRIND" << endl;
@@ -339,8 +340,32 @@ int main(int argc, char *argv[]) {
 	}
 
 	status = CPXgettime(env, &endtime);
-
+	
 //----------------------- FIN CICLO DE RESOLUCIÓN DEL LP
+	
+/*//----------------------- INICIO TEST DE BRON-KERBOSCH
+	vector<vector<int> > cliques;
+	bool R[cant_nodos];
+	bool P[cant_nodos];
+	bool X[cant_nodos];
+	
+	//R, P y W deben inicializarse así:
+	for(unsigned int i = 0; i < cant_nodos; i++){
+		R[i] = false;
+		P[i] = true;
+		X[i] = false;
+		}
+
+	bron_kerbosch(R, P, X, &adyacencias, &cliques);
+	
+	cout << "Cliques maximales del grafo" << endl;
+	for(unsigned int i = 0; i < cliques.size(); i++){
+		cout << "Clique: ";
+		for(unsigned int j = 0; j < cliques[i].size(); j++)
+			cout << cliques[i][j] << " ";
+		cout << endl;
+		}
+//----------------------- FIN TEST DE BRON-KERBOSCH*/
 
 	int solstat;
 	char statstring[510];
@@ -395,7 +420,7 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-bool agregar_plano_clique(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol){
+/*bool agregar_plano_clique(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol){
 	bool res = false;
 	vector<int> clique = obtener_clique_maximal(adyacencias); //TO DO: heuristica
 	sum = 0;
@@ -426,6 +451,54 @@ bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colore
 		}
 	}
 	return res;
+}*/
+
+void  bron_kerbosch(bool R[], bool P[], bool X[], const vector<vector<bool> > *adyacencias, vector<vector<int> > *cliques){
+	bool vacios = true;
+	
+	for(unsigned int i = 0; i < adyacencias->size(); i++)
+		if(P[i] || X[i]){
+			vacios = false;
+			break;
+		}
+
+	if(vacios){ //R es una clique maximal
+		vector<int> nueva_clique;
+		for(unsigned int i = 0; i < adyacencias->size(); i++)
+			if(R[i]){
+				nueva_clique.push_back(i);
+			}
+		cliques->push_back(nueva_clique);
+		return void();
+		}
+		
+	bool nuevo_R[adyacencias->size()];
+	bool nuevo_P[adyacencias->size()];
+	bool nuevo_X[adyacencias->size()];
+		
+	for(unsigned int v = 0; v < adyacencias->size(); v++)
+		if(P[v]){
+			for(unsigned int i = 0; i < adyacencias->size(); i++){
+				nuevo_R[i] = R[i];
+				nuevo_P[i] = false;
+				nuevo_X[i] = false;
+				}
+			
+			nuevo_R[v] = true;
+			for(unsigned int j = 0; j < adyacencias->size(); j++){
+				if((*adyacencias)[v][j] && P[j])
+					nuevo_P[j] = true;
+				if((*adyacencias)[v][j] && X[j])
+					nuevo_X[j] = true;
+			}
+			
+			bron_kerbosch(nuevo_R, nuevo_P, nuevo_X, adyacencias, cliques);
+			
+			P[v] = false;
+			X[v] = true;
+		}
+		
+	return void();
 }
 
 pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file){
