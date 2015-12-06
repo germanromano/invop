@@ -16,8 +16,11 @@ string colores[] = {"red", "green", "blue", "yellow", "black", "chocolate", "gol
 	"purple", "steelblue", "tomato", "seagreen", "firebrick", "cyan", "brown", "forestgreen", "indigo"};
 
 int main(int argc, char** argv){	
-	if(argc < 4) cout << "Uso: cant_nodos cant_particiones densidad output_file (0 <= densidad <= 1)" << endl;  
-
+	if(argc < 5){
+		cerr << "Uso: cant_nodos cant_particiones densidad output_file (0 <= densidad <= 1)" << endl;  
+		exit(1);
+	}
+	
 	int n = atoi(argv[1]);
 	int k = atoi(argv[2]);         
 	float p = atof(argv[3]);
@@ -80,7 +83,13 @@ vector< pair <int, int> > generar_particion(int n, int k){
 	int dado;
 	vector< pair <int, int> > v;
 	
-	for(int i = 0; i < n; i++){
+	// Los primeros k nodos van uno a cada subconjunto, para que ninguno quede vacío
+	for(int i = 0; i < k; i++){
+		pair <int, int> ubicacion (i, i);
+		v.push_back(ubicacion);
+		}
+	
+	for(int i = k; i < n; i++){
 		dado = rand() % k;
 		pair <int, int> ubicacion (i, dado);
 		v.push_back(ubicacion);
