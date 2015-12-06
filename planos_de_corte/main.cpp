@@ -9,15 +9,16 @@ ILOSTLBEGIN
 #include <vector>
 #include <utility>
 #include <math.h>
+#include <algorithm>
+#include <ctime>
+#include <cstdlib>
+#include <cmath> 
 
 #define TOL 1E-05
 
 pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file);
-//bool agregar_plano_clique(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
+bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, double *sol, int cant_colores_disp, int cant_variables);
 //bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
-
-//Algoritmo de Bron-Kerbosch para hallar cliques maximales (exacto):
-void  bron_kerbosch(bool R[], bool P[], bool X[], const vector<vector<bool> > *adyacencias, vector<vector<int> > *cliques);
 
 int main(int argc, char *argv[]) {
 	
@@ -26,9 +27,11 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	
+	srand(time(NULL));
 	string archivo_entrada(argv[1]);
 	int max_iteraciones = atoi(argv[2]);
-	
+
+//----------------------- PARSEO DE ENTRADA	
 	pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > grafo = parsear_entrada(archivo_entrada);
 	int cant_ejes = grafo.first;
 	vector<vector<bool> > adyacencias = grafo.second.first; // matriz de adyacencia
@@ -48,7 +51,8 @@ int main(int argc, char *argv[]) {
 	int cant_colores_disp = particion.size(); // cant colores usados <= cant de subconjuntos de la particion
 	
 	int n = cant_nodos * cant_colores_disp + cant_colores_disp; // n = cant de variables
-	
+
+//----------------------- CARGA DE LP
 	// Genero el problema de cplex.
 	int status;
 	CPXENVptr env; // Puntero al entorno.
@@ -311,7 +315,7 @@ int main(int argc, char *argv[]) {
 	while(!criterio_de_corte){
 		opt_anterior = opt_actual;
 		
-		//hubo_plano = agregar_plano_clique();
+		hubo_plano = agregar_restricciones_clique(&adyacencias, sol, cant_colores_disp, n);
 		//hubo_plano = hubo_plano || agregar_plano_agujero();
 		
 		hubo_plano = false;
@@ -340,33 +344,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	status = CPXgettime(env, &endtime);
-	
 //----------------------- FIN CICLO DE RESOLUCIÓN DEL LP
-	
-/*//----------------------- INICIO TEST DE BRON-KERBOSCH
-	vector<vector<int> > cliques;
-	bool R[cant_nodos];
-	bool P[cant_nodos];
-	bool X[cant_nodos];
-	
-	//R, P y W deben inicializarse así:
-	for(unsigned int i = 0; i < cant_nodos; i++){
-		R[i] = false;
-		P[i] = true;
-		X[i] = false;
-		}
-
-	bron_kerbosch(R, P, X, &adyacencias, &cliques);
-	
-	cout << "Cliques maximales del grafo:" << endl << endl;
-	for(unsigned int i = 0; i < cliques.size(); i++){
-		cout << "Clique: ";
-		for(unsigned int j = 0; j < cliques[i].size(); j++)
-			cout << cliques[i][j] << " ";
-		cout << endl;
-		}
-	cout << endl  << "Cantidad de cliques maximales: " << cliques.size() << endl;
-//----------------------- FIN TEST DE BRON-KERBOSCH*/
 
 	int solstat;
 	char statstring[510];
@@ -421,27 +399,89 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-// ACTUALIZAR LAS SIGUIENTES FUNCIONES:
-// -Las cliques y agujeros se calculan una única vez, fuera del ciclo
-// -Al buscar desigualdades violadas, se chequean todas las cliques/agujeros, o sólo "algunas"?
+bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, double *sol, int cant_colores_disp, int cant_variables){
 
-/*bool agregar_plano_clique(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol){
-	bool res = false;
-	vector<int> clique = obtener_clique_maximal(adyacencias);
-	sum = 0;
-	for(int j=0; j < cant_colores_disp; j++){
-		for(int p=0; p < clique.size(); p++){
-			sum = sum sol[p*cant_colores_disp + j]
+//----------------------- IDENTIFICO COLORES USADOS Y NODOS PINTADOS
+	vector<bool> nodos_pintados(adyacencias->size(), false);
+	for(unsigned int i = 0; i < adyacencias->size(); i++) // recorro nodos
+		for(int j = 0; j < cant_colores_disp; j++)	// recorro colores
+			if(sol[i*cant_colores_disp + j] > TOL){
+				nodos_pintados[i] = true;
+				break;
+			}
+	
+	vector<bool> colores_usados(cant_colores_disp, false);
+	for(int i = cant_variables - cant_colores_disp; i < cant_variables; i++)
+		if(sol[i] > TOL)
+			colores_usados[i - (cant_variables - cant_colores_disp)] = true;
+
+//----------------------- ARMADO DE CLIQUES
+	vector<vector<unsigned int> > cliques(adyacencias->size(), vector<unsigned int>(0));
+	
+	vector<unsigned int> permutacion(adyacencias->size(), 0);
+	for(unsigned int i = 0; i < permutacion.size(); i++)
+		permutacion[i] = i;
+	random_shuffle(permutacion.begin(), permutacion.end());
+	
+	// Ubico a los nodos pintados en diferentes cliques
+	int count = 0;
+	for(unsigned int i = 0; i < permutacion.size(); i++)
+		if(nodos_pintados[permutacion[i]]){
+			cliques[count].resize(1, permutacion[i]); // En vez de push_back(permutacion[i]): alloco memoria y agrego
+			count++;
 		}
-		if (sum > sol[sol.length() - cant_colores_disp + j + 1]){
-			//agregar restriccion con CPXaddrow()
-			res = true;
+	
+	// Ubico al resto de los nodos
+	for(unsigned int i = 0; i < permutacion.size(); i++) // recorro nodos (PERMUTADOS) no pintados
+		if(!nodos_pintados[(permutacion[i])]){
+			for(unsigned int j = 0; j < cliques.size(); j++){ // recorro cliques
+				count = 0;
+				
+				for(unsigned int v = 0; v < cliques[j].size(); v++) // recorro los nodos de la clique j
+					if((*adyacencias)[(permutacion[i])][(cliques[j][v])]) count++;
+				
+				if(count == cliques[j].size()){
+					cliques[j].resize(cliques[j].size() + 1, permutacion[i]);
+					break;
+				}
+			}
+		}
+	
+//----------------------- CHEQUEO DE RESTRICCIONES VIOLADAS
+	bool res = false;
+	int sum, violadas = 0;
+	
+	for(int c = 0; c < cliques.size(); c++){ // recorro cliques
+		for(int j = 0; j < cant_colores_disp; j++){ // recorro colores USADOS
+			if(colores_usados[j]){
+				sum = 0;
+				for(int p = 0; p < cliques[c].size(); p++){ // recorro nodos de la clique c
+					sum += sol[cliques[c][p] * cant_colores_disp + j];
+				}
+				
+				if (sum > sol[cant_variables - cant_colores_disp + j]){
+					// TO DO: agregar restriccion con CPXaddrow()
+					res = true;
+					violadas++;
+				}
+			}
 		}
 	}
+	
+	// Para imprimir la clique
+	/*for(unsigned int i = 0; i < cliques.size(); i++)
+		if(cliques[i].size() > 0){
+			cout << "Clique: ";
+			for(unsigned int j = 0; j < cliques[i].size(); j++)
+				cout << cliques[i][j] << " ";
+			cout << endl;
+		}*/
+	//cout << endl << "Se hallaron " << violadas << " restricciones violadas" << endl;
+	
 	return res;
 }
 
-bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol){
+/*bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol){
 	bool res = false;
 	vector<int> agujero = obtener_agujero_impar(adyacencias); //TO DO: heuristica
 	k = (agujero.size()-1)/2;
@@ -450,61 +490,13 @@ bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colore
 		for(int p=0; p < agujero.size(); p++){
 			sum = sum sol[p*cant_colores_disp + j]
 		}
-		if (sum > k*sol[sol.length() - cant_colores_disp + j + 1]){
+		if (sum > k*sol[sol.length() - cant_colores_disp + j]){
 			//agregar restriccion con CPXaddrow()
 			res = true;
 		}
 	}
 	return res;
 }*/
-
-void  bron_kerbosch(bool R[], bool P[], bool X[], const vector<vector<bool> > *adyacencias, vector<vector<int> > *cliques){
-	bool vacios = true;
-	
-	for(unsigned int i = 0; i < adyacencias->size(); i++)
-		if(P[i] || X[i]){
-			vacios = false;
-			break;
-		}
-
-	if(vacios){ //R es una clique maximal
-		vector<int> nueva_clique;
-		for(unsigned int i = 0; i < adyacencias->size(); i++)
-			if(R[i]){
-				nueva_clique.push_back(i);
-			}
-		cliques->push_back(nueva_clique);
-		return void();
-		}
-		
-	bool nuevo_R[adyacencias->size()];
-	bool nuevo_P[adyacencias->size()];
-	bool nuevo_X[adyacencias->size()];
-		
-	for(unsigned int v = 0; v < adyacencias->size(); v++)
-		if(P[v]){
-			for(unsigned int i = 0; i < adyacencias->size(); i++){
-				nuevo_R[i] = R[i];
-				nuevo_P[i] = false;
-				nuevo_X[i] = false;
-				}
-			
-			nuevo_R[v] = true;
-			for(unsigned int j = 0; j < adyacencias->size(); j++){
-				if((*adyacencias)[v][j] && P[j])
-					nuevo_P[j] = true;
-				if((*adyacencias)[v][j] && X[j])
-					nuevo_X[j] = true;
-			}
-			
-			bron_kerbosch(nuevo_R, nuevo_P, nuevo_X, adyacencias, cliques);
-			
-			P[v] = false;
-			X[v] = true;
-		}
-		
-	return void();
-}
 
 pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file){
 	unsigned int n, m, k;
