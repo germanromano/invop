@@ -19,6 +19,11 @@ ILOSTLBEGIN
 pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file);
 bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, double *sol, int cant_colores_disp, int cant_variables);
 //bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
+void  find_odd_cycle(const vector<vector<bool> > *adyacencias, vector<vector<int> > *odd_cycles,double *sol, int cant_colores_disp, int size_sol);
+int Xpj_igual_1(double *sol, int j, const vector<vector<bool> > *adyacencias, int cant_colores_disp);
+void buscar_ciclo(int v, int u, const vector<vector<bool> > *adyacencias, int limite_bajo, int limite_alto, vector<int> *odd_new_cycle, bool *encontro_ciclo, vector<bool> *visto);
+int vecino_con_mas_vecinos(int v, const vector<vector<bool> > *adyacencias, vector<bool> *visto);
+int vecinos_count(int v, const vector<vector<bool> > *adyacencias);
 
 int main(int argc, char *argv[]) {
 	
@@ -497,6 +502,85 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	}
 	return res;
 }*/
+
+//----------- ciclo impar ------------ ME FALTA TESTEARLO BASTANTE
+void  find_odd_cycle(const vector<vector<bool> > *adyacencias, vector<vector<int> > *odd_cycles, double *sol, int cant_colores_disp, int size_sol){
+
+	for(int j=0; j<cant_colores_disp; j++){
+		float W_j = sol[size_sol - cant_colores_disp + j + 1];
+		if(W_j>0){
+			int k = floor(1/W_j) - 1;
+			if(k>5){
+				int v = Xpj_igual_1(sol, j, adyacencias, cant_colores_disp);
+				if(v==-1) cerr << "Fallo Xpj_igual_1" << endl;
+				vector<int> odd_new_cycle;
+				bool encontro_ciclo_impar = true;
+				vector<bool> visto(adyacencias->size(), false); //inicializar en false
+				buscar_ciclo(v,v,adyacencias,5,k, &odd_new_cycle, &encontro_ciclo_impar, &visto);
+				if(encontro_ciclo_impar){
+					odd_cycles->push_back(odd_new_cycle);
+				}
+			}
+		}
+		
+	}
+	
+	return void();
+}
+
+int Xpj_igual_1(double *sol, int j, const vector<vector<bool> > *adyacencias, int cant_colores_disp){
+	for(int p=0; p < adyacencias->size(); p++){
+		if(sol[p*cant_colores_disp + j] == 1) return p;
+	}
+	return -1;
+}
+
+void buscar_ciclo(int v, int u, const vector<vector<bool> > *adyacencias, int limite_bajo, int limite_alto, vector<int> *odd_new_cycle, bool *encontro_ciclo, vector<bool> *visto){
+	//if(v!=u) 
+	//cout << "1" << encontro_ciclo << endl;
+	(*visto)[u]=true;
+	//for (int i=0; i<adyacencias->size(); i++){
+	//	cout << "visto[" << i << "]: " << (*visto)[i] << endl;
+	//}
+	odd_new_cycle->push_back(u);
+	//cout << "u: " << u << endl;
+	if((limite_bajo == 0) && (*adyacencias)[v][u] && (odd_new_cycle->size() % 2 != 0)){
+		return void();
+	} 
+	else{ 
+		if(limite_alto == 0){
+			*encontro_ciclo = false;
+		}
+		else {
+			int u2 = vecino_con_mas_vecinos(u,adyacencias, visto); //el visto es para no tomar nodos repetidos
+			buscar_ciclo(v,u2, adyacencias,limite_bajo -1, limite_alto -1, odd_new_cycle, encontro_ciclo, visto);
+		}
+	}
+	return void();
+}
+
+int vecino_con_mas_vecinos(int v, const vector<vector<bool> > *adyacencias, vector<bool> *visto){
+	int cant_vecinos_mas_grande = 0;
+	int vecino = -1;
+	for(int i=0; i<adyacencias->size(); i++){
+		int cant_vecinos = vecinos_count(i, adyacencias);
+		if((*adyacencias)[v][i] && (cant_vecinos > cant_vecinos_mas_grande) && !(*visto)[i]){
+			vecino = i;
+			cant_vecinos_mas_grande = cant_vecinos;
+		}
+	}
+	return vecino;
+}
+
+int vecinos_count(int v, const vector<vector<bool> > *adyacencias){
+	int cant_vecinos = 0;
+	for(int i=0; i<adyacencias->size(); i++){
+		if(&adyacencias[v][i]){
+			cant_vecinos++;
+		}
+	}
+	return cant_vecinos;
+}
 
 pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file){
 	unsigned int n, m, k;
