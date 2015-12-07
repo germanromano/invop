@@ -16,14 +16,25 @@ ILOSTLBEGIN
 
 #define TOL 1E-05
 
-pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file);
-bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, double *sol, int cant_colores_disp, int cant_variables);
+pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > parsear_entrada(string input_file);
+
+bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, double *sol, CPXENVptr env, CPXLPptr lp,
+			int cant_colores_disp, int cant_variables);
+
 //bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
-void  find_odd_cycle(const vector<vector<bool> > *adyacencias, vector<vector<int> > *odd_cycles,double *sol, int cant_colores_disp, int size_sol);
+
+void  find_odd_cycle(const vector<vector<bool> > *adyacencias, vector<vector<int> > *odd_cycles,double *sol,
+			int cant_colores_disp, int size_sol);
+						
 int Xpj_igual_1(double *sol, int j, const vector<vector<bool> > *adyacencias, int cant_colores_disp);
-void buscar_ciclo(int v, int u, const vector<vector<bool> > *adyacencias, int limite_bajo, int limite_alto, vector<int> *odd_new_cycle, bool *encontro_ciclo, vector<bool> *visto);
+
+void buscar_ciclo(int v, int u, const vector<vector<bool> > *adyacencias, int limite_bajo, int limite_alto,
+			vector<int> *odd_new_cycle, bool *encontro_ciclo, vector<bool> *visto);
+						
 int vecino_con_mas_vecinos(int v, const vector<vector<bool> > *adyacencias, vector<bool> *visto);
+
 int vecinos_count(int v, const vector<vector<bool> > *adyacencias);
+
 
 int main(int argc, char *argv[]) {
 	
@@ -37,10 +48,10 @@ int main(int argc, char *argv[]) {
 	int max_iteraciones = atoi(argv[2]);
 
 //----------------------- PARSEO DE ENTRADA	
-	pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > grafo = parsear_entrada(archivo_entrada);
+	pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > grafo = parsear_entrada(archivo_entrada);
 	int cant_ejes = grafo.first;
-	vector<vector<bool> > adyacencias = grafo.second.first; // matriz de adyacencia
-	vector<vector<bool> > particion = grafo.second.second;	// filas: subconjuntos de la particion. columnas: nodos.
+	vector<vector<bool> > *adyacencias = grafo.second.first; // matriz de adyacencia
+	vector<vector<bool> > *particion = grafo.second.second;	// filas: subconjuntos de la particion. columnas: nodos.
 	
 	// Variables binarias:
 	//		* X_n_j = nodo n pintado con el color j? (son cant_nodos * cant_colores_disp variables)
@@ -50,10 +61,9 @@ int main(int argc, char *argv[]) {
 	// Orden de las variables:
 	//		X_0_0, X_0_1, ... , X_0_(cant_col_disp), X_1_0, ... , X_(cant_nodos)_(cant_col_disp), W_0, ... , W(cant_col_disp)
 
-	
-	int cant_nodos = adyacencias.size();
-	int cant_subconj_particion = particion.size(); //cant de subconjuntos de la particion
-	int cant_colores_disp = particion.size(); // cant colores usados <= cant de subconjuntos de la particion
+	int cant_nodos = adyacencias->size();
+	int cant_subconj_particion = particion->size(); //cant de subconjuntos de la particion
+	int cant_colores_disp = particion->size(); // cant colores usados <= cant de subconjuntos de la particion
 	
 	int n = cant_nodos * cant_colores_disp + cant_colores_disp; // n = cant de variables
 
@@ -65,7 +75,6 @@ int main(int argc, char *argv[]) {
 	 
 	// Creo el entorno.
 	env = CPXopenCPLEX(&status);
-
 		
 	if (env == NULL) {
 		cerr << "Error creando el entorno" << endl;
@@ -95,6 +104,19 @@ int main(int argc, char *argv[]) {
 	CPXsetintparam(env, CPX_PARAM_RELAXPREIND, 0);
 	CPXsetintparam(env, CPX_PARAM_REDUCE, 0);
 	CPXsetintparam(env, CPX_PARAM_LANDPCUTS, -1);
+	//Otros parámetros
+	// Para desactivar la salida poner CPX_OFF. Para activar: CPX_ON.
+	status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
+		if (status) {
+			cerr << "Problema seteando SCRIND" << endl;
+			exit(1);
+		}
+	//Setea el tiempo limite de ejecucion.
+	status = CPXsetdblparam(env, CPX_PARAM_TILIM, 3600);
+		if (status) {
+			cerr << "Problema seteando el tiempo limite" << endl;
+			exit(1);
+		}
 
 	double *ub, *lb, *objfun; // Cota superior, cota inferior, coeficiente de la funcion objetivo.
 	char *xctype, **colnames; // tipo de la variable (por ahora son siempre continuas), string con el nombre de la variable.
@@ -143,10 +165,6 @@ int main(int argc, char *argv[]) {
 	delete[] xctype;
 	delete[] colnames;
 
-	// ccnt = numero nuevo de columnas en las restricciones.
-	// rcnt = cuantas restricciones se estan agregando.
-	// nzcnt = # de coeficientes != 0 a ser agregados a la matriz. Solo se pasan los valores que no son cero.
-
 	// Restricciones:
 	//	(1) Nodos adyacentes tienen distinto color (cant_ejes * cant_colores_disp restricciones por <=)
 	//	(2) Cada nodo tiene a lo sumo un color (cant_nodos restricciones por <=)
@@ -154,9 +172,9 @@ int main(int argc, char *argv[]) {
 	//	(4) W_j = 1 sii "X_i_j = 1 para algún i" (cant_colores_disp restricciones por >=)
 	//		=> TOTAL: (cant_ejes * cant_colores_disp + cant_nodos + cant_subconj_particion + cant_colores_disp) restricciones
 
-	int ccnt = 0;
-	int rcnt = cant_ejes * cant_colores_disp + cant_nodos + cant_subconj_particion + cant_colores_disp;
-	int nzcnt = 0; 
+	int ccnt = 0; //numero nuevo de columnas en las restricciones.
+	int rcnt = cant_ejes * cant_colores_disp + cant_nodos + cant_subconj_particion + cant_colores_disp; //cuantas restricciones se estan agregando.
+	int nzcnt = 0; //# de coeficientes != 0 a ser agregados a la matriz. Solo se pasan los valores que no son cero.
 
 	char sense[rcnt]; // Sentido de la desigualdad. 'G' es mayor o igual y 'E' para igualdad.
 	for(unsigned int i = 0; i < cant_ejes * cant_colores_disp; i++)
@@ -186,7 +204,7 @@ int main(int argc, char *argv[]) {
 	//Restricciones (1)
 	for(unsigned int i = 0; i < cant_nodos; i++) //itero nodo 1
 		for(unsigned int j = i+1; j < cant_nodos; j++) //itero nodo 2
-			if(adyacencias[i][j])
+			if((*adyacencias)[i][j])
 				for(unsigned int p = 0; p < cant_colores_disp; p++){ //itero color
 					matbeg[indice] = nzcnt;
 					indice++;
@@ -216,7 +234,7 @@ int main(int argc, char *argv[]) {
 		matbeg[indice] = nzcnt;
 		indice++;
 		for(unsigned int i = 0; i < cant_nodos; i++) //itero nodo
-			if(particion[v][i])
+			if((*particion)[v][i])
 				for(unsigned int p = 0; p < cant_colores_disp; p++){ //itero color
 					matind[nzcnt] = cant_colores_disp*i + p; //var: X_nodo_color
 					matval[nzcnt] = 1;
@@ -251,24 +269,6 @@ int main(int argc, char *argv[]) {
 	delete[] matind;
 	delete[] matval;
 
-	// Seteo de algunos parametros.
-	// Para desactivar la salida poner CPX_OFF. Para activar: CPX_ON.
-	status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
-		
-	if (status) {
-		cerr << "Problema seteando SCRIND" << endl;
-		exit(1);
-	}
-		
-	// Por ahora no va a ser necesario, pero mas adelante si. Setea el tiempo
-	// limite de ejecucion.
-	status = CPXsetdblparam(env, CPX_PARAM_TILIM, 3600);
-	
-	if (status) {
-		cerr << "Problema seteando el tiempo limite" << endl;
-		exit(1);
-	}
- 
 	// Escribimos el problema a un archivo .lp.
 	status = CPXwriteprob(env, lp, "output.lp", NULL);
 		
@@ -315,19 +315,33 @@ int main(int argc, char *argv[]) {
 		}
 	
 	criterio_de_corte = todas_enteras;
-
+	
 //----------------------- INICIO CICLO DE RESOLUCIÓN DEL LP
 	while(!criterio_de_corte){
 		opt_anterior = opt_actual;
 		
-		hubo_plano = agregar_restricciones_clique(&adyacencias, sol, cant_colores_disp, n);
+		hubo_plano = agregar_restricciones_clique(adyacencias, sol, env, lp, cant_colores_disp, n);
 		//hubo_plano = hubo_plano || agregar_plano_agujero();
 		
-		hubo_plano = false;
-		todas_enteras = true;
+		//hubo_plano = false;
+		//todas_enteras = true;
 		
 		if(hubo_plano){
+			delete [] sol;
+			double *sol = new double[n];
+			
 			status = CPXlpopt(env, lp);
+			if (status) {
+				cerr << "Problema optimizando CPLEX" << endl;
+				exit(1);
+			}
+			
+			status = CPXgetx(env, lp, sol, 0, n - 1);
+			if (status) {
+				cerr << "Problema obteniendo la solucion del LP." << endl;
+				exit(1);
+			}
+			
 			for (int i = 0; i < n; i++){
 				fractpart = modf(sol[i] , &intpart);
 				if (fractpart > TOL){
@@ -344,8 +358,8 @@ int main(int argc, char *argv[]) {
 		}
 		
 		cant_iteraciones++;
-		criterio_de_corte = !hubo_plano || todas_enteras || abs(opt_actual - opt_anterior) > TOL
-								|| (cant_iteraciones > max_iteraciones);
+		criterio_de_corte = todas_enteras || (cant_iteraciones > max_iteraciones)
+								|| !hubo_plano;// || abs(opt_actual - opt_anterior) < TOL;
 	}
 
 	status = CPXgettime(env, &endtime);
@@ -398,13 +412,17 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	delete [] sol;
 	solfile.close();
+	delete [] sol;
+	delete adyacencias;
+	delete particion;
 	
 	return 0;
 }
 
-bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, double *sol, int cant_colores_disp, int cant_variables){
+
+bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, double *sol, CPXENVptr env, CPXLPptr lp,
+									int cant_colores_disp, int cant_variables){
 
 //----------------------- IDENTIFICO COLORES USADOS Y NODOS PINTADOS
 	vector<bool> nodos_pintados(adyacencias->size(), false);
@@ -421,7 +439,7 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 			colores_usados[i - (cant_variables - cant_colores_disp)] = true;
 
 //----------------------- ARMADO DE CLIQUES
-	vector<vector<unsigned int> > cliques(adyacencias->size(), vector<unsigned int>(0));
+	vector<vector<unsigned int> > *cliques = new vector<vector<unsigned int> > (adyacencias->size(), vector<unsigned int>(0));
 	
 	vector<unsigned int> permutacion(adyacencias->size(), 0);
 	for(unsigned int i = 0; i < permutacion.size(); i++)
@@ -429,24 +447,25 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	random_shuffle(permutacion.begin(), permutacion.end());
 	
 	// Ubico a los nodos pintados en diferentes cliques
-	int count = 0;
-	for(unsigned int i = 0; i < permutacion.size(); i++)
+	int count, cant_nodos_pintados = 0;
+	for(unsigned int i = 0; i < permutacion.size(); i++) // recorro nodos (PERMUTADOS)
 		if(nodos_pintados[permutacion[i]]){
-			cliques[count].resize(1, permutacion[i]); // En vez de push_back(permutacion[i]): alloco memoria y agrego
-			count++;
+			(*cliques)[cant_nodos_pintados].resize(1, permutacion[i]); // En vez de push_back(permutacion[i]): alloco memoria y agrego
+			cant_nodos_pintados++;
 		}
 	
 	// Ubico al resto de los nodos
 	for(unsigned int i = 0; i < permutacion.size(); i++) // recorro nodos (PERMUTADOS) no pintados
 		if(!nodos_pintados[(permutacion[i])]){
-			for(unsigned int j = 0; j < cliques.size(); j++){ // recorro cliques
+			for(unsigned int j = 0; j < cant_nodos_pintados; j++){ // recorro cliques que contengan nodos pintados
 				count = 0;
 				
-				for(unsigned int v = 0; v < cliques[j].size(); v++) // recorro los nodos de la clique j
-					if((*adyacencias)[(permutacion[i])][(cliques[j][v])]) count++;
+				for(unsigned int v = 0; v < (*cliques)[j].size(); v++) // recorro los nodos de la clique j
+					if((*adyacencias)[(permutacion[i])][((*cliques)[j][v])]) count++;
+					else break;
 				
-				if(count == cliques[j].size()){
-					cliques[j].resize(cliques[j].size() + 1, permutacion[i]);
+				if(count == (*cliques)[j].size()){
+					(*cliques)[j].resize((*cliques)[j].size() + 1, permutacion[i]);
 					break;
 				}
 			}
@@ -454,18 +473,51 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	
 //----------------------- CHEQUEO DE RESTRICCIONES VIOLADAS
 	bool res = false;
-	int sum, violadas = 0;
+	int status, sum, violadas = 0;
 	
-	for(int c = 0; c < cliques.size(); c++){ // recorro cliques
-		for(int j = 0; j < cant_colores_disp; j++){ // recorro colores USADOS
+	int ccnt = 0; //numero nuevo de columnas en las restricciones.
+	int rcnt = 1; //cuantas restricciones se estan agregando.
+	int nzcnt = 0; //# de coeficientes != 0 a ser agregados a la matriz. Solo se pasan los valores que no son cero.
+	char sense[] = {'L'}; // Sentido de la desigualdad. 'G' es mayor o igual y 'E' para igualdad.
+	double rhs[] = {0}; // Termino independiente de las restricciones.
+	int matbeg[] = {0}; //Posicion en la que comienza cada restriccion en matind y matval.
+	int *matind = new int[cant_variables]; // Array con los indices de las variables con coeficientes != 0 en la desigualdad.
+	double *matval = new double[cant_variables]; // Array que en la posicion i tiene coeficiente ( != 0) de la variable cutind[i] en la restriccion.
+	
+	for(unsigned int c = 0; c < cant_nodos_pintados; c++){ // recorro cliques con algun nodo pintado
+		for(unsigned int j = 0; j < cant_colores_disp; j++){ // recorro colores USADOS
 			if(colores_usados[j]){
 				sum = 0;
-				for(int p = 0; p < cliques[c].size(); p++){ // recorro nodos de la clique c
-					sum += sol[cliques[c][p] * cant_colores_disp + j];
+				for(unsigned int p = 0; p < (*cliques)[c].size(); p++){ // recorro nodos de la clique c
+					sum += sol[(*cliques)[c][p] * cant_colores_disp + j];
 				}
 				
 				if (sum > sol[cant_variables - cant_colores_disp + j]){
-					// TO DO: agregar restriccion con CPXaddrow()
+					//cout << endl << "Restriccion violada: ";
+					//cargo restriccion asociada a la clique c y el color j
+					nzcnt = 0;
+					for(unsigned int p = 0; p < cant_variables; p++){ // reset de estructuras
+						matind[p] = 0;
+						matval[p] = 0;
+					}
+					for(unsigned int p = 0; p < (*cliques)[c].size(); p++){ // recorro nodos de la clique c
+						matind[nzcnt] = (*cliques)[c][p] * cant_colores_disp + j; // X_p_j
+						matval[nzcnt] = 1;
+						nzcnt++;
+						//cout << "X_" << (*cliques)[c][p] << "_" << j << " ";
+					}
+					matind[nzcnt] = cant_variables - cant_colores_disp + j; // W_j
+					matval[nzcnt] = -1;
+					nzcnt++;
+					//cout << "<= W_" << j; 
+
+					status = CPXaddrows(env, lp, ccnt, rcnt, nzcnt, rhs, sense, matbeg, matind, matval, NULL, NULL);
+					/*status = CPXwriteprob(env, lp, "postoutput.lp", NULL);
+					if (status) {
+						cerr << "Problema agregando restricciones." << endl;
+						exit(1);
+					}*/
+
 					res = true;
 					violadas++;
 				}
@@ -474,17 +526,22 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	}
 	
 	// Para imprimir la clique
-	/*for(unsigned int i = 0; i < cliques.size(); i++)
-		if(cliques[i].size() > 0){
+	/*cout << endl << "-------------------------------------" << endl << "DESCOMPOSICION EN CLIQUES:" << endl;
+	for(unsigned int i = 0; i < (*cliques).size(); i++)
+		if((*cliques)[i].size() > 0){
 			cout << "Clique: ";
-			for(unsigned int j = 0; j < cliques[i].size(); j++)
-				cout << cliques[i][j] << " ";
+			for(unsigned int j = 0; j < (*cliques)[i].size(); j++)
+				cout << (*cliques)[i][j] << " ";
 			cout << endl;
 		}*/
 	//cout << endl << "Se hallaron " << violadas << " restricciones violadas" << endl;
 	
+	delete cliques;
+	delete[] matind;
+	delete[] matval;
 	return res;
 }
+
 
 /*bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol){
 	bool res = false;
@@ -502,6 +559,7 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	}
 	return res;
 }*/
+
 
 //----------- ciclo impar ------------ ME FALTA TESTEARLO BASTANTE
 void  find_odd_cycle(const vector<vector<bool> > *adyacencias, vector<vector<int> > *odd_cycles, double *sol, int cant_colores_disp, int size_sol){
@@ -528,12 +586,14 @@ void  find_odd_cycle(const vector<vector<bool> > *adyacencias, vector<vector<int
 	return void();
 }
 
+
 int Xpj_igual_1(double *sol, int j, const vector<vector<bool> > *adyacencias, int cant_colores_disp){
 	for(int p=0; p < adyacencias->size(); p++){
 		if(sol[p*cant_colores_disp + j] == 1) return p;
 	}
 	return -1;
 }
+
 
 void buscar_ciclo(int v, int u, const vector<vector<bool> > *adyacencias, int limite_bajo, int limite_alto, vector<int> *odd_new_cycle, bool *encontro_ciclo, vector<bool> *visto){
 	//if(v!=u) 
@@ -559,6 +619,7 @@ void buscar_ciclo(int v, int u, const vector<vector<bool> > *adyacencias, int li
 	return void();
 }
 
+
 int vecino_con_mas_vecinos(int v, const vector<vector<bool> > *adyacencias, vector<bool> *visto){
 	int cant_vecinos_mas_grande = 0;
 	int vecino = -1;
@@ -572,6 +633,7 @@ int vecino_con_mas_vecinos(int v, const vector<vector<bool> > *adyacencias, vect
 	return vecino;
 }
 
+
 int vecinos_count(int v, const vector<vector<bool> > *adyacencias){
 	int cant_vecinos = 0;
 	for(int i=0; i<adyacencias->size(); i++){
@@ -582,13 +644,14 @@ int vecinos_count(int v, const vector<vector<bool> > *adyacencias){
 	return cant_vecinos;
 }
 
-pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file){
+
+pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > parsear_entrada(string input_file){
 	unsigned int n, m, k;
 	string aux, line;
 	char* pch;
-		ifstream file;
-		
-		file.open(input_file.c_str());
+	ifstream file;
+	
+	file.open(input_file.c_str());
 
 	//Cargo parametros
 	file >> aux;
@@ -598,7 +661,8 @@ pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada
 	file >> aux;
 	k = atoi(aux.substr(2, aux.length()-2).c_str());
 	
-	vector<vector<bool> > particion(k, vector<bool>(n, false));
+	//vector<vector<bool> > particion(k, vector<bool>(n, false));
+	vector<vector<bool> > *particion = new vector<vector<bool> >(k, vector<bool>(n, false));
 	 
 	//Cargo particion
 	for(unsigned int i = 0; i < k; i++){
@@ -611,14 +675,15 @@ pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada
 		
 		pch = strtok(line_no_const, " ,");
 		while (pch != NULL){
-			particion[i][atoi(pch)] = true;
+			(*particion)[i][atoi(pch)] = true;
 			pch = strtok(NULL, " ,");
 		}
 		
 		getline(file, line); getline(file, line); getline(file, line);
 	}
 	
-	vector<vector<bool> > adyacencias(n, vector<bool>(n, false));
+	//vector<vector<bool> > adyacencias(n, vector<bool>(n, false));
+	vector<vector<bool> > *adyacencias = new vector<vector<bool> >(n, vector<bool>(n, false));
 	
 	//Cargo adyacencias
 	getline(file, line); getline(file, line);
@@ -634,17 +699,12 @@ pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada
 		x = atoi(pch);
 		pch = strtok(NULL, " -");
 		y = atoi(pch);
-		adyacencias[x][y] = true;
-		adyacencias[y][x] = true;
+		(*adyacencias)[x][y] = true;
+		(*adyacencias)[y][x] = true;
 	}
 	
-	pair <vector<vector<bool> >, vector<vector<bool> > > matrices;
-	matrices.first = adyacencias;
-	matrices.second = particion;
-	
-	pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > result;
-	result.first = m;
-	result.second = matrices;
+	pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > result(m, pair<vector<vector<bool> >*,
+		vector<vector<bool> >* >(adyacencias, particion)); 
 	
 	file.close();
 	
