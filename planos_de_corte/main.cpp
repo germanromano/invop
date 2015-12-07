@@ -263,13 +263,13 @@ int main(int argc, char *argv[]) {
 		cerr << "Problema agregando restricciones." << endl;
 		exit(1);
 	}
-			
+	
 	delete[] rhs;
 	delete[] matbeg;
 	delete[] matind;
 	delete[] matval;
 
-	// Escribimos el problema a un archivo .lp.
+	// Escribimos el problema a un archivo .lp
 	status = CPXwriteprob(env, lp, "output.lp", NULL);
 		
 	if (status) {
@@ -298,6 +298,8 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	
+	cout << "Optimo Inicial: " << opt_actual << endl;
+	
 	double *sol = new double[n];
 	status = CPXgetx(env, lp, sol, 0, n - 1);
 	if (status) {
@@ -323,13 +325,7 @@ int main(int argc, char *argv[]) {
 		hubo_plano = agregar_restricciones_clique(adyacencias, sol, env, lp, cant_colores_disp, n);
 		//hubo_plano = hubo_plano || agregar_plano_agujero();
 		
-		//hubo_plano = false;
-		//todas_enteras = true;
-		
 		if(hubo_plano){
-			delete [] sol;
-			double *sol = new double[n];
-			
 			status = CPXlpopt(env, lp);
 			if (status) {
 				cerr << "Problema optimizando CPLEX" << endl;
@@ -448,9 +444,9 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	
 	// Ubico a los nodos pintados en diferentes cliques
 	int count, cant_nodos_pintados = 0;
-	for(unsigned int i = 0; i < permutacion.size(); i++) // recorro nodos (PERMUTADOS)
+	for(unsigned int i = 0; i < permutacion.size(); i++) // recorro nodos pintados (PERMUTADOS)
 		if(nodos_pintados[permutacion[i]]){
-			(*cliques)[cant_nodos_pintados].resize(1, permutacion[i]); // En vez de push_back(permutacion[i]): alloco memoria y agrego
+			(*cliques)[cant_nodos_pintados].resize(1, permutacion[i]); // En vez de push_back(i): alloco memoria y agrego
 			cant_nodos_pintados++;
 		}
 	
@@ -534,7 +530,7 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 				cout << (*cliques)[i][j] << " ";
 			cout << endl;
 		}*/
-	//cout << endl << "Se hallaron " << violadas << " restricciones violadas" << endl;
+	cout << endl << "Restr. clique violadas: \t" << violadas << endl;
 	
 	delete cliques;
 	delete[] matind;
@@ -707,6 +703,5 @@ pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > parsear_entra
 		vector<vector<bool> >* >(adyacencias, particion)); 
 	
 	file.close();
-	
 	return result;	
 }
