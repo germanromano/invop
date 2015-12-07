@@ -300,7 +300,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	
-	cout << "Optimo Inicial: " << opt_actual << endl;
+	cout << "Optimo Inicial: " << opt_actual << endl << endl;
 	
 	double *sol = new double[n];
 	status = CPXgetx(env, lp, sol, 0, n - 1);
@@ -320,8 +320,6 @@ int main(int argc, char *argv[]) {
 	
 	criterio_de_corte = todas_enteras || max_iteraciones==0;
 
-
-	cout << "\nInicio ciclo plano de corte" << endl;
 //----------------------- INICIO CICLO DE RESOLUCIÓN DEL LP
 	while(!criterio_de_corte){
 		opt_anterior = opt_actual;
@@ -425,18 +423,18 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 									int cant_colores_disp, int cant_variables){
 
 //----------------------- IDENTIFICO COLORES USADOS Y NODOS PINTADOS
-	vector<bool> nodos_pintados(adyacencias->size(), false);
+	vector<bool> *nodos_pintados = new vector<bool>(adyacencias->size(), false);
 	for(unsigned int i = 0; i < adyacencias->size(); i++) // recorro nodos
 		for(int j = 0; j < cant_colores_disp; j++)	// recorro colores
 			if(sol[i*cant_colores_disp + j] > TOL){
-				nodos_pintados[i] = true;
+				(*nodos_pintados)[i] = true;
 				break;
 			}
 	
-	vector<bool> colores_usados(cant_colores_disp, false);
+	vector<bool> *colores_usados = new vector<bool>(cant_colores_disp, false);
 	for(int i = cant_variables - cant_colores_disp; i < cant_variables; i++)
 		if(sol[i] > TOL)
-			colores_usados[i - (cant_variables - cant_colores_disp)] = true;
+			(*colores_usados)[i - (cant_variables - cant_colores_disp)] = true;
 
 //----------------------- ARMADO DE CLIQUES
 	vector<vector<unsigned int> > *cliques = new vector<vector<unsigned int> > (adyacencias->size(), vector<unsigned int>(0));
@@ -447,16 +445,17 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	random_shuffle(permutacion.begin(), permutacion.end());
 	
 	// Ubico a los nodos pintados en diferentes cliques
+	//~ int count, cant_nodos_pintados = cliques->size();
 	int count, cant_nodos_pintados = 0;
 	for(unsigned int i = 0; i < permutacion.size(); i++) // recorro nodos pintados (PERMUTADOS)
-		if(nodos_pintados[permutacion[i]]){
+		if((*nodos_pintados)[permutacion[i]]){
 			(*cliques)[cant_nodos_pintados].resize(1, permutacion[i]); // En vez de push_back(i): alloco memoria y agrego
 			cant_nodos_pintados++;
 		}
 	
 	// Ubico al resto de los nodos
 	for(unsigned int i = 0; i < permutacion.size(); i++) // recorro nodos (PERMUTADOS) no pintados
-		if(!nodos_pintados[(permutacion[i])]){
+		if(!(*nodos_pintados)[(permutacion[i])]){
 			for(unsigned int j = 0; j < cant_nodos_pintados; j++){ // recorro cliques que contengan nodos pintados
 				count = 0;
 				
@@ -486,7 +485,7 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	
 	for(unsigned int c = 0; c < cant_nodos_pintados; c++){ // recorro cliques con algun nodo pintado
 		for(unsigned int j = 0; j < cant_colores_disp; j++){ // recorro colores USADOS
-			if(colores_usados[j]){
+			if((*colores_usados)[j]){
 				sum = 0;
 				for(unsigned int p = 0; p < (*cliques)[c].size(); p++){ // recorro nodos de la clique c
 					sum += sol[(*cliques)[c][p] * cant_colores_disp + j];
@@ -534,9 +533,11 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 				cout << (*cliques)[i][j] << " ";
 			cout << endl;
 		}*/
-	cout << endl << "Restr. clique violadas: \t" << violadas << endl;
+	cout << "Restr. clique violadas: \t" << violadas << endl;
 	
 	delete cliques;
+	delete nodos_pintados;
+	delete colores_usados;
 	delete[] matind;
 	delete[] matval;
 	return res;
@@ -615,7 +616,7 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 			}
 		}
 	}
-	cout << endl << "Restr. ciclos violadas: \t" << violadas << endl;
+	cout << "Restr. ciclos violadas: \t" << violadas << endl;
 
 	delete[] matind;
 	delete[] matval;
@@ -670,7 +671,8 @@ void buscar_ciclo(int v, int u, const vector<vector<bool> > *adyacencias, int li
 		}
 		else {
 			int u2 = vecino_con_mas_vecinos(u,adyacencias, visto); //el visto es para no tomar nodos repetidos
-			buscar_ciclo(v,u2, adyacencias,limite_bajo -1, limite_alto -1, odd_new_cycle, encontro_ciclo, visto);
+			if(u2 > -1) buscar_ciclo(v,u2, adyacencias,limite_bajo -1, limite_alto -1, odd_new_cycle, encontro_ciclo, visto);
+			else *encontro_ciclo = false;
 		}
 	}
 	return void();
