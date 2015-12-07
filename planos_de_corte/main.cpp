@@ -21,12 +21,14 @@ pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > parsear_entra
 bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, double *sol, CPXENVptr env, CPXLPptr lp,
 			int cant_colores_disp, int cant_variables);
 
+bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, double *sol, CPXENVptr env, CPXLPptr lp,
+									int cant_colores_disp, int cant_variables);
 //bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol);
 
 void  find_odd_cycle(const vector<vector<bool> > *adyacencias, vector<vector<int> > *odd_cycles,double *sol,
 			int cant_colores_disp, int size_sol);
 						
-int Xpj_igual_1(double *sol, int j, const vector<vector<bool> > *adyacencias, int cant_colores_disp);
+int Xpj_mayor_0(double *sol, int j, const vector<vector<bool> > *adyacencias, int cant_colores_disp);
 
 void buscar_ciclo(int v, int u, const vector<vector<bool> > *adyacencias, int limite_bajo, int limite_alto,
 			vector<int> *odd_new_cycle, bool *encontro_ciclo, vector<bool> *visto);
@@ -316,14 +318,16 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	
-	criterio_de_corte = todas_enteras;
-	
+	criterio_de_corte = todas_enteras || max_iteraciones==0;
+
+
+	cout << "\nInicio ciclo plano de corte" << endl;
 //----------------------- INICIO CICLO DE RESOLUCIÓN DEL LP
 	while(!criterio_de_corte){
 		opt_anterior = opt_actual;
 		
 		hubo_plano = agregar_restricciones_clique(adyacencias, sol, env, lp, cant_colores_disp, n);
-		//hubo_plano = hubo_plano || agregar_plano_agujero();
+		hubo_plano = agregar_restricciones_ciclos(adyacencias, sol, env, lp, cant_colores_disp, n) || hubo_plano;
 		
 		if(hubo_plano){
 			status = CPXlpopt(env, lp);
@@ -354,7 +358,7 @@ int main(int argc, char *argv[]) {
 		}
 		
 		cant_iteraciones++;
-		criterio_de_corte = todas_enteras || (cant_iteraciones > max_iteraciones)
+		criterio_de_corte = todas_enteras || (cant_iteraciones >= max_iteraciones)
 								|| !hubo_plano;// || abs(opt_actual - opt_anterior) < TOL;
 	}
 
@@ -538,6 +542,85 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	return res;
 }
 
+bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, double *sol, CPXENVptr env, CPXLPptr lp,
+									int cant_colores_disp, int cant_variables){
+
+	
+	//vector<bool> nodos_pintados(adyacencias->size(), false);
+	//for(unsigned int i = 0; i < adyacencias->size(); i++) // recorro nodos
+	//	for(int j = 0; j < cant_colores_disp; j++)	// recorro colores
+	//		if(sol[i*cant_colores_disp + j] > TOL){
+	//			nodos_pintados[i] = true;
+	//			break;
+	//		}
+	
+	//----------------------- IDENTIFICO COLORES USADOS
+	vector<bool> colores_usados(cant_colores_disp, false);
+	for(int i = cant_variables - cant_colores_disp; i < cant_variables; i++)
+		if(sol[i] > TOL)
+			colores_usados[i - (cant_variables - cant_colores_disp)] = true;
+
+	//----------------------- CONSTRUYO LOS CICLOS
+	vector<vector<int> > odd_cycles;	
+	find_odd_cycle(adyacencias, &odd_cycles, sol, cant_colores_disp, cant_variables);
+	//for (int i = 0; i< odd_cycles.size(); i++){
+	//	cout << "odd_cycles.size() = " << odd_cycles[i].size() << endl;
+	//	for (int j = 0; j<odd_cycles[i].size(); j++){
+	//		cout << "odd_cycle[" << i << "][" << j << "]: " << odd_cycles[i][j] << endl;
+	//	}
+	//}
+
+	//----------------------- CHEQUEO DE RESTRICCIONES VIOLADAS
+	bool res = false;
+	int status, sum, violadas = 0;
+	
+	int ccnt = 0; //numero nuevo de columnas en las restricciones.
+	int rcnt = 1; //cuantas restricciones se estan agregando.
+	int nzcnt = 0; //# de coeficientes != 0 a ser agregados a la matriz. Solo se pasan los valores que no son cero.
+	char sense[] = {'L'}; // Sentido de la desigualdad. 'G' es mayor o igual y 'E' para igualdad.
+	double rhs[] = {0}; // Termino independiente de las restricciones.
+	int matbeg[] = {0}; //Posicion en la que comienza cada restriccion en matind y matval.
+	int *matind = new int[cant_variables]; // Array con los indices de las variables con coeficientes != 0 en la desigualdad.
+	double *matval = new double[cant_variables]; // Array que en la posicion i tiene coeficiente ( != 0) de la variable cutind[i] en la restriccion.
+	
+	for(unsigned int c = 0; c < odd_cycles.size(); c++){ // recorro ciclos con algun nodo pintado
+		for(unsigned int j = 0; j < cant_colores_disp; j++){ // recorro colores USADOS
+			if(colores_usados[j]){
+				sum = 0;
+				for(unsigned int p = 0; p < odd_cycles[c].size(); p++){ // recorro nodos de los ciclos c
+					sum += sol[odd_cycles[c][p] * cant_colores_disp + j];
+				}
+				
+				if (sum > ((odd_cycles[c].size()-1)/2)*sol[cant_variables - cant_colores_disp + j]){
+					//cargo restriccion asociada al ciclo c y el color j
+					nzcnt = 0;
+					for(unsigned int p = 0; p < cant_variables; p++){ // reset de estructuras
+						matind[p] = 0;
+						matval[p] = 0;
+					}
+					for(unsigned int p = 0; p < odd_cycles[c].size(); p++){ // recorro nodos del ciclo c
+						matind[nzcnt] = odd_cycles[c][p] * cant_colores_disp + j; // X_p_j
+						matval[nzcnt] = 1;
+						nzcnt++;
+					}
+					matind[nzcnt] = cant_variables - cant_colores_disp + j; // W_j
+					matval[nzcnt] = -1;
+					nzcnt++; 
+
+					status = CPXaddrows(env, lp, ccnt, rcnt, nzcnt, rhs, sense, matbeg, matind, matval, NULL, NULL);
+
+					res = true;
+					violadas++;
+				}
+			}
+		}
+	}
+	cout << endl << "Restr. ciclos violadas: \t" << violadas << endl;
+
+	delete[] matind;
+	delete[] matval;
+	return res;
+}
 
 /*bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol){
 	bool res = false;
@@ -557,20 +640,21 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 }*/
 
 
-//----------- ciclo impar ------------ ME FALTA TESTEARLO BASTANTE
+//----------- ciclos impares ------------ FUNCIONA PERFECTO
 void  find_odd_cycle(const vector<vector<bool> > *adyacencias, vector<vector<int> > *odd_cycles, double *sol, int cant_colores_disp, int size_sol){
 
 	for(int j=0; j<cant_colores_disp; j++){
-		float W_j = sol[size_sol - cant_colores_disp + j + 1];
-		if(W_j>0){
-			int k = floor(1/W_j) - 1;
+		float W_j = sol[size_sol - cant_colores_disp + j];
+		if(W_j>TOL){
+			int k = ceil(1/W_j) - 1;
+
 			if(k>5){
-				int v = Xpj_igual_1(sol, j, adyacencias, cant_colores_disp);
-				if(v==-1) cerr << "Fallo Xpj_igual_1" << endl;
+				int v = Xpj_mayor_0(sol, j, adyacencias, cant_colores_disp);
+				if(v==-1) cerr << "Fallo Xpj_mayor_0" << endl;
 				vector<int> odd_new_cycle;
 				bool encontro_ciclo_impar = true;
 				vector<bool> visto(adyacencias->size(), false); //inicializar en false
-				buscar_ciclo(v,v,adyacencias,5,k, &odd_new_cycle, &encontro_ciclo_impar, &visto);
+				buscar_ciclo(v,v,adyacencias,5,2*k+1, &odd_new_cycle, &encontro_ciclo_impar, &visto);
 				if(encontro_ciclo_impar){
 					odd_cycles->push_back(odd_new_cycle);
 				}
@@ -583,24 +667,18 @@ void  find_odd_cycle(const vector<vector<bool> > *adyacencias, vector<vector<int
 }
 
 
-int Xpj_igual_1(double *sol, int j, const vector<vector<bool> > *adyacencias, int cant_colores_disp){
+int Xpj_mayor_0(double *sol, int j, const vector<vector<bool> > *adyacencias, int cant_colores_disp){
 	for(int p=0; p < adyacencias->size(); p++){
-		if(sol[p*cant_colores_disp + j] == 1) return p;
+		if(sol[p*cant_colores_disp + j] > TOL) return p;
 	}
 	return -1;
 }
 
 
 void buscar_ciclo(int v, int u, const vector<vector<bool> > *adyacencias, int limite_bajo, int limite_alto, vector<int> *odd_new_cycle, bool *encontro_ciclo, vector<bool> *visto){
-	//if(v!=u) 
-	//cout << "1" << encontro_ciclo << endl;
 	(*visto)[u]=true;
-	//for (int i=0; i<adyacencias->size(); i++){
-	//	cout << "visto[" << i << "]: " << (*visto)[i] << endl;
-	//}
 	odd_new_cycle->push_back(u);
-	//cout << "u: " << u << endl;
-	if((limite_bajo == 0) && (*adyacencias)[v][u] && (odd_new_cycle->size() % 2 != 0)){
+	if((limite_bajo < 1) && (*adyacencias)[v][u] && (odd_new_cycle->size() % 2 != 0)){
 		return void();
 	} 
 	else{ 
