@@ -584,7 +584,7 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 	double *matval = new double[cant_variables]; // Array que en la posicion i tiene coeficiente ( != 0) de la variable cutind[i] en la restriccion.
 	
 	for(unsigned int c = 0; c < odd_cycles.size(); c++){ // recorro ciclos con algun nodo pintado
-		for(unsigned int j = 0; j < cant_colores_disp; j++){ // recorro colores USADOS
+		for(unsigned int j = 0; j < cant_colores_disp; j++){ // recorro colores
 			if(colores_usados[j]){
 				sum = 0;
 				for(unsigned int p = 0; p < odd_cycles[c].size(); p++){ // recorro nodos de los ciclos c
@@ -604,7 +604,7 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 						nzcnt++;
 					}
 					matind[nzcnt] = cant_variables - cant_colores_disp + j; // W_j
-					matval[nzcnt] = -1;
+					matval[nzcnt] = -(odd_cycles[c].size()-1)/2;
 					nzcnt++; 
 
 					status = CPXaddrows(env, lp, ccnt, rcnt, nzcnt, rhs, sense, matbeg, matind, matval, NULL, NULL);
@@ -621,23 +621,6 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 	delete[] matval;
 	return res;
 }
-
-/*bool agregar_plano_agujero(vector<vector<double > > adyacencias, int cant_colores_disp, double *sol){
-	bool res = false;
-	vector<int> agujero = obtener_agujero_impar(adyacencias); //TO DO: heuristica
-	k = (agujero.size()-1)/2;
-	sum = 0;
-	for(int j=0; j < cant_colores_disp; j++){
-		for(int p=0; p < agujero.size(); p++){
-			sum = sum sol[p*cant_colores_disp + j]
-		}
-		if (sum > k*sol[sol.length() - cant_colores_disp + j]){
-			//agregar restriccion con CPXaddrow()
-			res = true;
-		}
-	}
-	return res;
-}*/
 
 
 //----------- ciclos impares ------------ FUNCIONA PERFECTO
