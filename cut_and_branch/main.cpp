@@ -370,8 +370,7 @@ int main(int argc, char *argv[]) {
 	objfun = new double[n];
 	xctype = new char[n];
 	//colnames = new char*[n];
-	int *colint;
-	colint = new int[n];
+	int *colint = new int[n];
 	
 	// Defino las variables X_n_j
 	for (int i = 0; i < n - cant_colores_disp; i++) {
@@ -402,18 +401,19 @@ int main(int argc, char *argv[]) {
 	}
 	
 	// Libero las estructuras.
-	for (int i = 0; i < n; i++) {
-		delete[] colnames[i];
-	}
+	//for (int i = 0; i < n; i++) {
+	//	delete[] colnames[i];
+	//}
 	
 	delete[] ub;
 	delete[] lb;
 	delete[] objfun;
 	delete[] xctype;
-	delete[] colnames;
+	delete[] colint;
 
 	// Seteo de algunos parametros.
 	// Para desactivar la salida poner CPX_OFF.
+
 	status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
 		
 	if (status) {
@@ -471,37 +471,13 @@ int main(int argc, char *argv[]) {
 	}
 		
 	cout << "Optimo: " << objval << "\t(Time: " << (endtime - inittime) << " sec)" << endl;
-
-	status = CPXgettime(env, &endtime);
-
-	//int solstat;
-	//char statstring[510];
-	//CPXCHARptr p;
-	solstat = CPXgetstat(env, lp);
-	p = CPXgetstatstring(env, solstat, statstring);
-	//string statstr(statstring);
-	cout << endl << "Resultado de la optimizacion: " << statstring << endl;
-	
-	cout << solstat << endl;
-	cout << CPX_STAT_OPTIMAL << endl;
-	if(solstat!=CPX_STAT_OPTIMAL) exit(1);	
-	
-	//double objval;
-	status = CPXgetobjval(env, lp, &objval);
-		
-	if (status) {
-		cerr << "Problema obteniendo valor de mejor solucion." << endl;
-		exit(1);
-	}
-		
-	cout << "Optimo: " << objval << "\t(Time: " << (endtime - inittime) << " sec)" << endl; 
-
-	// Tomamos los valores de la solucion y los escribimos a un archivo.
+// Tomamos los valores de la solucion y los escribimos a un archivo.
 	std::string outputfile = "output.sol";
 	ofstream solfile(outputfile.c_str());
 
 	// Tomamos los valores de todas las variables. Estan numeradas de 0 a n-1.
-	status = CPXgetx(env, lp, sol, 0, n - 1);
+	//*sol = new double[n];
+	status = CPXgetmipx(env, lp, sol, 0, n - 1);
 
 	if (status) {
 		cerr << "Problema obteniendo la solucion del LP." << endl;
@@ -509,7 +485,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Solo escribimos las variables distintas de cero (tolerancia, 1E-05).
-
 	solfile << "Status de la solucion: " << statstr << endl;
 	// Imprimo var X_n_j
 	for (int i = 0; i < n - cant_colores_disp; i++) {
@@ -524,8 +499,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	solfile.close();
 	delete [] sol;
+	solfile.close();
 	delete adyacencias;
 	delete particion;
 	
