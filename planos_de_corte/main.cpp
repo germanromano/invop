@@ -720,7 +720,6 @@ pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > parsear_entra
 	file >> aux;
 	k = atoi(aux.substr(2, aux.length()-2).c_str());
 	
-	//vector<vector<bool> > particion(k, vector<bool>(n, false));
 	vector<vector<bool> > *particion = new vector<vector<bool> >(k, vector<bool>(n, false));
 	 
 	//Cargo particion
@@ -741,7 +740,6 @@ pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > parsear_entra
 		getline(file, line); getline(file, line); getline(file, line);
 	}
 	
-	//vector<vector<bool> > adyacencias(n, vector<bool>(n, false));
 	vector<vector<bool> > *adyacencias = new vector<vector<bool> >(n, vector<bool>(n, false));
 	
 	//Cargo adyacencias

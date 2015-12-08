@@ -127,13 +127,15 @@ int main(int argc, char *argv[]) {
 	objfun = new double[n];
 	xctype = new char[n];
 	colnames = new char*[n];
+	int *colint = new int[n];
 	
 	// Defino las variables X_n_j
 	for (int i = 0; i < n - cant_colores_disp; i++) {
 		ub[i] = 1;
 		lb[i] = 0;
 		objfun[i] = 0; // Estas var no figuran en la funcion objetivo
-		xctype[i] = 'C';
+		xctype[i] = 'B';
+		colint[i] = i;
 		colnames[i] = new char[10];
 		sprintf(colnames[i], "X_%d_%d", i / cant_colores_disp, i % cant_colores_disp);
 	}
@@ -143,7 +145,8 @@ int main(int argc, char *argv[]) {
 		ub[i] = 1;
 		lb[i] = 0;
 		objfun[i] = 1;
-		xctype[i] = 'C';
+		xctype[i] = 'B';
+		colint[i] = i;
 		colnames[i] = new char[10];
 		sprintf(colnames[i], "W_%d", i - (n - cant_colores_disp));
 	}
@@ -164,7 +167,6 @@ int main(int argc, char *argv[]) {
 	delete[] ub;
 	delete[] lb;
 	delete[] objfun;
-	delete[] xctype;
 	delete[] colnames;
 
 	// Restricciones:
@@ -272,7 +274,7 @@ int main(int argc, char *argv[]) {
 	delete[] matval;
 
 	// Escribimos el problema a un archivo .lp
-	status = CPXwriteprob(env, lp, "output.lp", NULL);
+	status = CPXwriteprob(env, lp, "output_original.lp", NULL);
 		
 	if (status) {
 		cerr << "Problema escribiendo modelo" << endl;
@@ -300,7 +302,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	
-	cout << "Optimo Inicial: " << opt_actual << endl;
+	cout << "Optimo de la primera relajacion: " << opt_actual << endl;
 	
 	double *sol = new double[n];
 	status = CPXgetx(env, lp, sol, 0, n - 1);
@@ -321,7 +323,7 @@ int main(int argc, char *argv[]) {
 	criterio_de_corte = todas_enteras || max_iteraciones==0;
 
 
-	cout << "\nInicio ciclo plano de corte" << endl;
+	cout << endl << "---------- Inicio Ciclo de Planos de Corte ----------" << endl << endl;
 //----------------------- INICIO CICLO DE RESOLUCIÓN DEL LP
 	while(!criterio_de_corte){
 		opt_anterior = opt_actual;
@@ -362,76 +364,28 @@ int main(int argc, char *argv[]) {
 								|| !hubo_plano;// || abs(opt_actual - opt_anterior) < TOL;
 	}
 //----------------------- FIN CICLO DE RESOLUCIÓN DEL LP
+	cout << endl << "Optimo de la ultima relajacion: " << opt_actual << endl;
+	cout << endl << "---------- Inicio Branch and Bound ----------" << endl << endl;
 
-	//double *ub, *lb, *objfun; // Cota superior, cota inferior, coeficiente de la funcion objetivo.
-	//char *xctype, **colnames; // tipo de la variable (por ahora son siempre continuas), string con el nombre de la variable.
-	ub = new double[n]; 
-	lb = new double[n];
-	objfun = new double[n];
-	xctype = new char[n];
-	//colnames = new char*[n];
-	int *colint = new int[n];
-	
-	// Defino las variables X_n_j
-	for (int i = 0; i < n - cant_colores_disp; i++) {
-		ub[i] = 1;
-		lb[i] = 0;
-		objfun[i] = 0; // Estas var no figuran en la funcion objetivo
-		xctype[i] = 'B';
-		colint[i] = i;
-		//sprintf(colnames[i], "X_%d_%d", i / cant_colores_disp, i % cant_colores_disp);
-	}
-
-	// Defino las variables W_j
-	for (int i = n - cant_colores_disp; i < n; i++) {
-		ub[i] = 1;
-		lb[i] = 0;
-		objfun[i] = 1;
-		xctype[i] = 'B';
-		colint[i] = i;
-		//sprintf(colnames[i], "W_%d", i - (n - cant_colores_disp));
-	}
-	
-	// Agrego las columnas.
+	// Seteo las variables como enteras.
 	status = CPXchgctype(env, lp, n, colint, xctype);
-	
 	if (status) {
 		cerr << "Problema modificando tipos de las variables CPXchgctype" << endl;
 		exit(1);
 	}
 	
-	// Libero las estructuras.
-	//for (int i = 0; i < n; i++) {
-	//	delete[] colnames[i];
-	//}
-	
-	delete[] ub;
-	delete[] lb;
-	delete[] objfun;
 	delete[] xctype;
 	delete[] colint;
 
-	// Seteo de algunos parametros.
-	// Para desactivar la salida poner CPX_OFF.
-
-	status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
-		
+	// Activo salida por pantalla
+	status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);	
 	if (status) {
 		cerr << "Problema seteando SCRIND" << endl;
 		exit(1);
 	}
-		
-	// Por ahora no va a ser necesario, pero mas adelante si. Setea el tiempo
-	// limite de ejecucion.
-	status = CPXsetdblparam(env, CPX_PARAM_TILIM, 3600);
-	
-	if (status) {
-		cerr << "Problema seteando el tiempo limite" << endl;
-		exit(1);
-	}
  
 	// Escribimos el problema a un archivo .lp.
-	status = CPXwriteprob(env, lp, "output.lp", NULL);
+	status = CPXwriteprob(env, lp, "output_con_cortes.lp", NULL);
 		
 	if (status) {
 		cerr << "Problema escribiendo modelo" << endl;
@@ -512,18 +466,18 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 									int cant_colores_disp, int cant_variables){
 
 //----------------------- IDENTIFICO COLORES USADOS Y NODOS PINTADOS
-	vector<bool> nodos_pintados(adyacencias->size(), false);
+	vector<bool> *nodos_pintados = new vector<bool>(adyacencias->size(), false);
 	for(unsigned int i = 0; i < adyacencias->size(); i++) // recorro nodos
 		for(int j = 0; j < cant_colores_disp; j++)	// recorro colores
 			if(sol[i*cant_colores_disp + j] > TOL){
-				nodos_pintados[i] = true;
+				(*nodos_pintados)[i] = true;
 				break;
 			}
 	
-	vector<bool> colores_usados(cant_colores_disp, false);
+	vector<bool> *colores_usados = new vector<bool>(cant_colores_disp, false);
 	for(int i = cant_variables - cant_colores_disp; i < cant_variables; i++)
 		if(sol[i] > TOL)
-			colores_usados[i - (cant_variables - cant_colores_disp)] = true;
+			(*colores_usados)[i - (cant_variables - cant_colores_disp)] = true;
 
 //----------------------- ARMADO DE CLIQUES
 	vector<vector<unsigned int> > *cliques = new vector<vector<unsigned int> > (adyacencias->size(), vector<unsigned int>(0));
@@ -534,16 +488,17 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	random_shuffle(permutacion.begin(), permutacion.end());
 	
 	// Ubico a los nodos pintados en diferentes cliques
+	//~ int count, cant_nodos_pintados = cliques->size();
 	int count, cant_nodos_pintados = 0;
 	for(unsigned int i = 0; i < permutacion.size(); i++) // recorro nodos pintados (PERMUTADOS)
-		if(nodos_pintados[permutacion[i]]){
+		if((*nodos_pintados)[permutacion[i]]){
 			(*cliques)[cant_nodos_pintados].resize(1, permutacion[i]); // En vez de push_back(i): alloco memoria y agrego
 			cant_nodos_pintados++;
 		}
 	
 	// Ubico al resto de los nodos
 	for(unsigned int i = 0; i < permutacion.size(); i++) // recorro nodos (PERMUTADOS) no pintados
-		if(!nodos_pintados[(permutacion[i])]){
+		if(!(*nodos_pintados)[(permutacion[i])]){
 			for(unsigned int j = 0; j < cant_nodos_pintados; j++){ // recorro cliques que contengan nodos pintados
 				count = 0;
 				
@@ -573,7 +528,7 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	
 	for(unsigned int c = 0; c < cant_nodos_pintados; c++){ // recorro cliques con algun nodo pintado
 		for(unsigned int j = 0; j < cant_colores_disp; j++){ // recorro colores USADOS
-			if(colores_usados[j]){
+			if((*colores_usados)[j]){
 				sum = 0;
 				for(unsigned int p = 0; p < (*cliques)[c].size(); p++){ // recorro nodos de la clique c
 					sum += sol[(*cliques)[c][p] * cant_colores_disp + j];
@@ -621,9 +576,11 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 				cout << (*cliques)[i][j] << " ";
 			cout << endl;
 		}*/
-	cout << endl << "Restr. clique violadas: \t" << violadas << endl;
+	cout << "Restr. clique violadas: \t" << violadas << endl;
 	
 	delete cliques;
+	delete nodos_pintados;
+	delete colores_usados;
 	delete[] matind;
 	delete[] matval;
 	return res;
@@ -702,7 +659,7 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 			}
 		}
 	}
-	cout << endl << "Restr. ciclos violadas: \t" << violadas << endl;
+	cout << "Restr. ciclos violadas: \t" << violadas << endl;
 
 	delete[] matind;
 	delete[] matval;
@@ -806,7 +763,6 @@ pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > parsear_entra
 	file >> aux;
 	k = atoi(aux.substr(2, aux.length()-2).c_str());
 	
-	//vector<vector<bool> > particion(k, vector<bool>(n, false));
 	vector<vector<bool> > *particion = new vector<vector<bool> >(k, vector<bool>(n, false));
 	 
 	//Cargo particion
@@ -827,7 +783,6 @@ pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > parsear_entra
 		getline(file, line); getline(file, line); getline(file, line);
 	}
 	
-	//vector<vector<bool> > adyacencias(n, vector<bool>(n, false));
 	vector<vector<bool> > *adyacencias = new vector<vector<bool> >(n, vector<bool>(n, false));
 	
 	//Cargo adyacencias

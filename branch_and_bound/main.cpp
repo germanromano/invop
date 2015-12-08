@@ -11,7 +11,7 @@ ILOSTLBEGIN
 
 #define TOL 1E-05
 
-pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file);
+pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > parsear_entrada(string input_file);
 
 int main(int argc, char *argv[]) {
 	
@@ -22,10 +22,10 @@ int main(int argc, char *argv[]) {
 	
 	string archivo_entrada(argv[1]);
 	
-	pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > grafo = parsear_entrada(archivo_entrada);
+	pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > grafo = parsear_entrada(archivo_entrada);
 	int cant_ejes = grafo.first;
-	vector<vector<bool> > adyacencias = grafo.second.first; // matriz de adyacencia
-	vector<vector<bool> > particion = grafo.second.second;	// filas: subconjuntos de la particion. columnas: nodos.
+	vector<vector<bool> > *adyacencias = grafo.second.first; // matriz de adyacencia
+	vector<vector<bool> > *particion = grafo.second.second;	// filas: subconjuntos de la particion. columnas: nodos.
 	
 	// Variables binarias:
 	//		* X_n_j = nodo n pintado con el color j? (son cant_nodos * cant_colores_disp variables)
@@ -36,9 +36,9 @@ int main(int argc, char *argv[]) {
 	//		X_0_0, X_0_1, ... , X_0_(cant_col_disp), X_1_0, ... , X_(cant_nodos)_(cant_col_disp), W_0, ... , W(cant_col_disp)
 
 	
-	int cant_nodos = adyacencias.size();
-	int cant_subconj_particion = particion.size(); //cant de subconjuntos de la particion
-	int cant_colores_disp = particion.size(); // cant colores usados <= cant de subconjuntos de la particion
+	int cant_nodos = adyacencias->size();
+	int cant_subconj_particion = particion->size(); //cant de subconjuntos de la particion
+	int cant_colores_disp = particion->size(); // cant colores usados <= cant de subconjuntos de la particion
 	
 	int n = cant_nodos * cant_colores_disp + cant_colores_disp; // n = cant de variables
 	
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
 	//Restricciones (1)
 	for(unsigned int i = 0; i < cant_nodos; i++) //itero nodo 1
 		for(unsigned int j = i+1; j < cant_nodos; j++) //itero nodo 2
-			if(adyacencias[i][j])
+			if((*adyacencias)[i][j])
 				for(unsigned int p = 0; p < cant_colores_disp; p++){ //itero color
 					matbeg[indice] = nzcnt;
 					indice++;
@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) {
 		matbeg[indice] = nzcnt;
 		indice++;
 		for(unsigned int i = 0; i < cant_nodos; i++) //itero nodo
-			if(particion[v][i])
+			if((*particion)[v][i])
 				for(unsigned int p = 0; p < cant_colores_disp; p++){ //itero color
 					matind[nzcnt] = cant_colores_disp*i + p; //var: X_nodo_color
 					matval[nzcnt] = 1;
@@ -333,13 +333,13 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada(string input_file){
+pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > parsear_entrada(string input_file){
 	unsigned int n, m, k;
 	string aux, line;
 	char* pch;
-		ifstream file;
-		
-		file.open(input_file.c_str());
+	ifstream file;
+	
+	file.open(input_file.c_str());
 
 	//Cargo parametros
 	file >> aux;
@@ -349,7 +349,7 @@ pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada
 	file >> aux;
 	k = atoi(aux.substr(2, aux.length()-2).c_str());
 	
-	vector<vector<bool> > particion(k, vector<bool>(n, false));
+	vector<vector<bool> > *particion = new vector<vector<bool> >(k, vector<bool>(n, false));
 	 
 	//Cargo particion
 	for(unsigned int i = 0; i < k; i++){
@@ -362,14 +362,14 @@ pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada
 		
 		pch = strtok(line_no_const, " ,");
 		while (pch != NULL){
-			particion[i][atoi(pch)] = true;
+			(*particion)[i][atoi(pch)] = true;
 			pch = strtok(NULL, " ,");
 		}
 		
 		getline(file, line); getline(file, line); getline(file, line);
 	}
 	
-	vector<vector<bool> > adyacencias(n, vector<bool>(n, false));
+	vector<vector<bool> > *adyacencias = new vector<vector<bool> >(n, vector<bool>(n, false));
 	
 	//Cargo adyacencias
 	getline(file, line); getline(file, line);
@@ -385,19 +385,13 @@ pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > parsear_entrada
 		x = atoi(pch);
 		pch = strtok(NULL, " -");
 		y = atoi(pch);
-		adyacencias[x][y] = true;
-		adyacencias[y][x] = true;
+		(*adyacencias)[x][y] = true;
+		(*adyacencias)[y][x] = true;
 	}
 	
-	pair <vector<vector<bool> >, vector<vector<bool> > > matrices;
-	matrices.first = adyacencias;
-	matrices.second = particion;
-	
-	pair <int, pair<vector<vector<bool> >, vector<vector<bool> > > > result;
-	result.first = m;
-	result.second = matrices;
+	pair <int, pair<vector<vector<bool> >*, vector<vector<bool> >* > > result(m, pair<vector<vector<bool> >*,
+		vector<vector<bool> >* >(adyacencias, particion)); 
 	
 	file.close();
-	
 	return result;	
 }
