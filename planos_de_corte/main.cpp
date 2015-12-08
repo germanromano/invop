@@ -543,10 +543,10 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	return res;
 }
 
+
 bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, double *sol, CPXENVptr env, CPXLPptr lp,
 									int cant_colores_disp, int cant_variables){
 
-	
 	//vector<bool> nodos_pintados(adyacencias->size(), false);
 	//for(unsigned int i = 0; i < adyacencias->size(); i++) // recorro nodos
 	//	for(int j = 0; j < cant_colores_disp; j++)	// recorro colores
@@ -605,7 +605,7 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 						nzcnt++;
 					}
 					matind[nzcnt] = cant_variables - cant_colores_disp + j; // W_j
-					matval[nzcnt] = -(odd_cycles[c].size()-1)/2;
+					matval[nzcnt] = (odd_cycles[c].size()-1)/(-2);
 					nzcnt++; 
 
 					status = CPXaddrows(env, lp, ccnt, rcnt, nzcnt, rhs, sense, matbeg, matind, matval, NULL, NULL);
@@ -624,7 +624,6 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 }
 
 
-//----------- ciclos impares ------------ FUNCIONA PERFECTO
 void  find_odd_cycle(const vector<vector<bool> > *adyacencias, vector<vector<int> > *odd_cycles, double *sol, int cant_colores_disp, int size_sol){
 
 	for(int j=0; j<cant_colores_disp; j++){

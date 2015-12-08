@@ -535,7 +535,7 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 				}
 				
 				if (sum > sol[cant_variables - cant_colores_disp + j]){
-					//cout << endl << "Restriccion violada: ";
+					//cout << endl << "Restriccion violada: " << sum << " > " << sol[cant_variables - cant_colores_disp + j] << endl;
 					//cargo restriccion asociada a la clique c y el color j
 					nzcnt = 0;
 					for(unsigned int p = 0; p < cant_variables; p++){ // reset de estructuras
@@ -586,10 +586,10 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	return res;
 }
 
+
 bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, double *sol, CPXENVptr env, CPXLPptr lp,
 									int cant_colores_disp, int cant_variables){
 
-	
 	//vector<bool> nodos_pintados(adyacencias->size(), false);
 	//for(unsigned int i = 0; i < adyacencias->size(); i++) // recorro nodos
 	//	for(int j = 0; j < cant_colores_disp; j++)	// recorro colores
@@ -607,12 +607,17 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 	//----------------------- CONSTRUYO LOS CICLOS
 	vector<vector<int> > odd_cycles;	
 	find_odd_cycle(adyacencias, &odd_cycles, sol, cant_colores_disp, cant_variables);
-	//for (int i = 0; i< odd_cycles.size(); i++){
-	//	cout << "odd_cycles.size() = " << odd_cycles[i].size() << endl;
-	//	for (int j = 0; j<odd_cycles[i].size(); j++){
-	//		cout << "odd_cycle[" << i << "][" << j << "]: " << odd_cycles[i][j] << endl;
-	//	}
-	//}
+	
+	//Para imprimir los ciclos
+	/*for (int i = 0; i< odd_cycles.size(); i++){
+		cout << "* CICLO de longitud: " << odd_cycles[i].size() << endl;
+		for(int j = 0; j < odd_cycles[i].size(); j++){
+			cout << "** Nodo: " << odd_cycles[i][j] << " ";
+			if(j == odd_cycles[i].size()-1)
+				cout << ". Conectado a " << odd_cycles[i][0] << " ? " << (*adyacencias)[(odd_cycles[i][j])][(odd_cycles[i][0])] << endl;
+			else cout << ". Conectado a " << odd_cycles[i][j+1] << " ? " << (*adyacencias)[(odd_cycles[i][j])][(odd_cycles[i][j+1])] << endl;
+		}
+	}*/
 
 	//----------------------- CHEQUEO DE RESTRICCIONES VIOLADAS
 	bool res = false;
@@ -627,15 +632,16 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 	int *matind = new int[cant_variables]; // Array con los indices de las variables con coeficientes != 0 en la desigualdad.
 	double *matval = new double[cant_variables]; // Array que en la posicion i tiene coeficiente ( != 0) de la variable cutind[i] en la restriccion.
 	
-	for(unsigned int c = 0; c < odd_cycles.size(); c++){ // recorro ciclos con algun nodo pintado
-		for(unsigned int j = 0; j < cant_colores_disp; j++){ // recorro colores
+	for(unsigned int c = 0; c < odd_cycles.size(); c++){ // recorro ciclos
+		for(unsigned int j = 0; j < cant_colores_disp; j++){ // recorro colores USADOS
 			if(colores_usados[j]){
 				sum = 0;
-				for(unsigned int p = 0; p < odd_cycles[c].size(); p++){ // recorro nodos de los ciclos c
+				for(unsigned int p = 0; p < odd_cycles[c].size(); p++){ // recorro nodos del ciclo c
 					sum += sol[odd_cycles[c][p] * cant_colores_disp + j];
 				}
 				
 				if (sum > ((odd_cycles[c].size()-1)/2)*sol[cant_variables - cant_colores_disp + j]){
+					//cout << endl << "Restriccion violada: " << sum << " > " << ((odd_cycles[c].size()-1)/2)*sol[cant_variables - cant_colores_disp + j] << endl;
 					//cargo restriccion asociada al ciclo c y el color j
 					nzcnt = 0;
 					for(unsigned int p = 0; p < cant_variables; p++){ // reset de estructuras
@@ -646,10 +652,12 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 						matind[nzcnt] = odd_cycles[c][p] * cant_colores_disp + j; // X_p_j
 						matval[nzcnt] = 1;
 						nzcnt++;
+						//cout << "X_" << odd_cycles[c][p] << "_" << j << " ";
 					}
 					matind[nzcnt] = cant_variables - cant_colores_disp + j; // W_j
-					matval[nzcnt] = -(odd_cycles[c].size()-1)/2;
-					nzcnt++; 
+					matval[nzcnt] = (odd_cycles[c].size()-1)/(-2);
+					nzcnt++;
+					//cout << "<= "<< (double)((odd_cycles[c].size()-1)/(-2)) << " * " << "W_" << j;
 
 					status = CPXaddrows(env, lp, ccnt, rcnt, nzcnt, rhs, sense, matbeg, matind, matval, NULL, NULL);
 
@@ -667,7 +675,6 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 }
 
 
-//----------- ciclos impares ------------ FUNCIONA PERFECTO
 void  find_odd_cycle(const vector<vector<bool> > *adyacencias, vector<vector<int> > *odd_cycles, double *sol, int cant_colores_disp, int size_sol){
 
 	for(int j=0; j<cant_colores_disp; j++){
