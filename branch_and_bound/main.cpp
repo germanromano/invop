@@ -296,8 +296,11 @@ int main(int argc, char *argv[]) {
 		cerr << "Problema obteniendo valor de mejor solucion." << endl;
 		exit(1);
 	}
-		
-	cout << "Optimo: " << objval << "\t(Time: " << (endtime - inittime) << " sec)" << endl; 
+	
+	int nodecount = CPXgetnodecnt(env,lp);
+	
+	cout << "Optimo: " << objval << "\t(Time: " << (endtime - inittime) << " sec)" << endl;
+	cout << "\t\t(Nodos recorridos: " << nodecount << ")" << endl;
 
 	// Tomamos los valores de la solucion y los escribimos a un archivo.
 	std::string outputfile = "output.sol";
