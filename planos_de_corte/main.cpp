@@ -492,7 +492,7 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 					sum += sol[(*cliques)[c][p] * cant_colores_disp + j];
 				}
 				
-				if (sum > sol[cant_variables - cant_colores_disp + j]){
+				if (sum - sol[cant_variables - cant_colores_disp + j] > TOL){
 					//cout << endl << "Restriccion violada: ";
 					//cargo restriccion asociada a la clique c y el color j
 					nzcnt = 0;
@@ -594,7 +594,7 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 					sum += sol[odd_cycles[c][p] * cant_colores_disp + j];
 				}
 				
-				if (sum > ((odd_cycles[c].size()-1)/2)*sol[cant_variables - cant_colores_disp + j]){
+				if (sum - ((odd_cycles[c].size()-1)/2)*sol[cant_variables - cant_colores_disp + j] > TOL){
 					//cargo restriccion asociada al ciclo c y el color j
 					nzcnt = 0;
 					for(unsigned int p = 0; p < cant_variables; p++){ // reset de estructuras
