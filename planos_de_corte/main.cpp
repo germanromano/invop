@@ -472,7 +472,8 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	
 //----------------------- CHEQUEO DE RESTRICCIONES VIOLADAS
 	bool res = false;
-	int status, sum, violadas = 0;
+	int status, violadas = 0;
+	double sum;
 	
 	int ccnt = 0; //numero nuevo de columnas en las restricciones.
 	int rcnt = 1; //cuantas restricciones se estan agregando.
@@ -486,7 +487,7 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 	for(unsigned int c = 0; c < cant_nodos_pintados; c++){ // recorro cliques con algun nodo pintado
 		for(unsigned int j = 0; j < cant_colores_disp; j++){ // recorro colores USADOS
 			if((*colores_usados)[j]){
-				sum = 0;
+				sum = 0.0;
 				for(unsigned int p = 0; p < (*cliques)[c].size(); p++){ // recorro nodos de la clique c
 					sum += sol[(*cliques)[c][p] * cant_colores_disp + j];
 				}
@@ -573,7 +574,8 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 
 	//----------------------- CHEQUEO DE RESTRICCIONES VIOLADAS
 	bool res = false;
-	int status, sum, violadas = 0;
+	int status, violadas = 0;
+	double sum;
 	
 	int ccnt = 0; //numero nuevo de columnas en las restricciones.
 	int rcnt = 1; //cuantas restricciones se estan agregando.
@@ -587,7 +589,7 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 	for(unsigned int c = 0; c < odd_cycles.size(); c++){ // recorro ciclos con algun nodo pintado
 		for(unsigned int j = 0; j < cant_colores_disp; j++){ // recorro colores
 			if(colores_usados[j]){
-				sum = 0;
+				sum = 0.0;
 				for(unsigned int p = 0; p < odd_cycles[c].size(); p++){ // recorro nodos de los ciclos c
 					sum += sol[odd_cycles[c][p] * cant_colores_disp + j];
 				}
