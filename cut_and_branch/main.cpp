@@ -119,6 +119,22 @@ int main(int argc, char *argv[]) {
 			cerr << "Problema seteando el tiempo limite" << endl;
 			exit(1);
 		}
+		
+	//ESTRATEGIA DE RECORRIDO DEL ARBOL
+	// 0 Depth-first search
+	// 1 Best-bound search (default)
+	// 2 Best-estimate search
+	// 3 Alternative best-estimate search 
+	//CPXsetintparam(env, CPX_PARAM_NODESEL, 0);
+	
+	//ESTRATEGIA DE SELECCION DE VARIABLE
+	// -1 Branch on variable with minimum infeasibility
+	// 0 Automatic: let CPLEX choose variable to branch on (default)
+	// 1 Branch on variable with maximum infeasibility
+	// 2 Branch based on pseudo costs
+	// 3 Strong branching
+	// 4 Branch based on pseudo reduced costs
+	//CPXsetintparam(env, CPX_PARAM_VARSEL, 3);
 
 	double *ub, *lb, *objfun; // Cota superior, cota inferior, coeficiente de la funcion objetivo.
 	char *xctype, **colnames; // tipo de la variable (por ahora son siempre continuas), string con el nombre de la variable.

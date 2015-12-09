@@ -79,6 +79,35 @@ int main(int argc, char *argv[]) {
 	CPXsetintparam(env, CPX_PARAM_RELAXPREIND, 0);
 	CPXsetintparam(env, CPX_PARAM_REDUCE, 0);
 	CPXsetintparam(env, CPX_PARAM_LANDPCUTS, -1);
+	//Otros parámetros
+	// Para desactivar la salida poner CPX_OFF. Para activar: CPX_ON.
+	status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
+		if (status) {
+			cerr << "Problema seteando SCRIND" << endl;
+			exit(1);
+		}
+	//Setea el tiempo limite de ejecucion.
+	status = CPXsetdblparam(env, CPX_PARAM_TILIM, 3600);
+		if (status) {
+			cerr << "Problema seteando el tiempo limite" << endl;
+			exit(1);
+		}
+	
+	//ESTRATEGIA DE RECORRIDO DEL ARBOL
+	// 0 Depth-first search
+	// 1 Best-bound search (default)
+	// 2 Best-estimate search
+	// 3 Alternative best-estimate search 
+	//CPXsetintparam(env, CPX_PARAM_NODESEL, 0);
+	
+	//ESTRATEGIA DE SELECCION DE VARIABLE
+	// -1 Branch on variable with minimum infeasibility
+	// 0 Automatic: let CPLEX choose variable to branch on (default)
+	// 1 Branch on variable with maximum infeasibility
+	// 2 Branch based on pseudo costs
+	// 3 Strong branching
+	// 4 Branch based on pseudo reduced costs
+	//CPXsetintparam(env, CPX_PARAM_VARSEL, 3);
 
 	double *ub, *lb, *objfun; // Cota superior, cota inferior, coeficiente de la funcion objetivo.
 	char *xctype, **colnames; // tipo de la variable (por ahora son siempre continuas), string con el nombre de la variable.
@@ -234,24 +263,6 @@ int main(int argc, char *argv[]) {
 	delete[] matbeg;
 	delete[] matind;
 	delete[] matval;
-
-	// Seteo de algunos parametros.
-	// Para desactivar la salida poner CPX_OFF.
-	status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
-		
-	if (status) {
-		cerr << "Problema seteando SCRIND" << endl;
-		exit(1);
-	}
-		
-	// Por ahora no va a ser necesario, pero mas adelante si. Setea el tiempo
-	// limite de ejecucion.
-	status = CPXsetdblparam(env, CPX_PARAM_TILIM, 3600);
-	
-	if (status) {
-		cerr << "Problema seteando el tiempo limite" << endl;
-		exit(1);
-	}
  
 	// Escribimos el problema a un archivo .lp.
 	status = CPXwriteprob(env, lp, "output.lp", NULL);
