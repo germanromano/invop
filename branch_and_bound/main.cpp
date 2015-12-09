@@ -165,11 +165,12 @@ int main(int argc, char *argv[]) {
 	//	(2) Cada nodo tiene a lo sumo un color (cant_nodos restricciones por <=)
 	//	(3) Solo un nodo de cada subconj. de la particion tiene color (cant. de subconj. de la particion restricciones por =)
 	//	(4) W_j = 1 sii "X_i_j = 1 para algún i" (cant_colores_disp restricciones por >=)
-	//		=> TOTAL: (cant_ejes * cant_colores_disp + cant_nodos + cant_subconj_particion + cant_colores_disp) restricciones
+	//	(5) W_j >= W_(j+1) (cant_colores_disp - 1 restricciones por >=)
+	//		=> TOTAL: (cant_ejes * cant_colores_disp + cant_nodos + cant_subconj_particion + cant_colores_disp + cant_colores_disp - 1) restricciones
 
-	int ccnt = 0;
-	int rcnt = cant_ejes * cant_colores_disp + cant_nodos + cant_subconj_particion + cant_colores_disp;
-	int nzcnt = 0; 
+	int ccnt = 0; //numero nuevo de columnas en las restricciones.
+	int rcnt = cant_ejes * cant_colores_disp + cant_nodos + cant_subconj_particion + cant_colores_disp + cant_colores_disp - 1; //cuantas restricciones se estan agregando.
+	int nzcnt = 0; //# de coeficientes != 0 a ser agregados a la matriz. Solo se pasan los valores que no son cero.
 
 	char sense[rcnt]; // Sentido de la desigualdad. 'G' es mayor o igual y 'E' para igualdad.
 	for(unsigned int i = 0; i < cant_ejes * cant_colores_disp; i++)
@@ -187,11 +188,11 @@ int main(int argc, char *argv[]) {
 	double *matval = new double[rcnt*n]; // Array que en la posicion i tiene coeficiente ( != 0) de la variable cutind[i] en la restriccion.
 
 	//El termino indep. de restr (1), (2) y (3) es 1
-	for(unsigned int i = 0; i < rcnt - cant_colores_disp; i++)
+	for(unsigned int i = 0; i < cant_ejes * cant_colores_disp + cant_nodos + cant_subconj_particion; i++)
 		rhs[i] = 1;
 		
-	//El termino indep. de restr (4) es 0
-	for(unsigned int i = rcnt - cant_colores_disp; i < rcnt; i++)
+	//El termino indep. de restr (4) y (5) es 0
+	for(unsigned int i = cant_ejes * cant_colores_disp + cant_nodos + cant_subconj_particion; i < rcnt; i++)
 		rhs[i] = 0;
 	
 	unsigned int indice = 0; //numero de restriccion actual
@@ -249,6 +250,18 @@ int main(int argc, char *argv[]) {
 			matval[nzcnt] = -1;
 			nzcnt++;
 		}
+	}
+	
+	//Restricciones (5)
+	for(unsigned int p = 0; p < cant_colores_disp - 1; p++){ //itero color
+		matbeg[indice] = nzcnt;
+		indice++;
+		matind[nzcnt] = cant_nodos * cant_colores_disp + p; //var: W_color
+		matval[nzcnt] = 1;
+		nzcnt++;
+		matind[nzcnt] = cant_nodos * cant_colores_disp + p + 1; //var: W_(color+1)
+		matval[nzcnt] = -1;
+		nzcnt++;
 	}
 	
 	// Esta rutina agrega la restriccion al lp.
