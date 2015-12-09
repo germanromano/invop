@@ -501,12 +501,12 @@ bool agregar_restricciones_clique(const vector<vector<bool> > *adyacencias, doub
 					}
 					for(unsigned int p = 0; p < (*cliques)[c].size(); p++){ // recorro nodos de la clique c
 						matind[nzcnt] = (*cliques)[c][p] * cant_colores_disp + j; // X_p_j
-						matval[nzcnt] = 1;
+						matval[nzcnt] = 1.0;
 						nzcnt++;
 						//cout << "X_" << (*cliques)[c][p] << "_" << j << " ";
 					}
 					matind[nzcnt] = cant_variables - cant_colores_disp + j; // W_j
-					matval[nzcnt] = -1;
+					matval[nzcnt] = -1.0;
 					nzcnt++;
 					//cout << "<= W_" << j; 
 
@@ -605,7 +605,7 @@ bool agregar_restricciones_ciclos(const vector<vector<bool> > *adyacencias, doub
 						nzcnt++;
 					}
 					matind[nzcnt] = cant_variables - cant_colores_disp + j; // W_j
-					matval[nzcnt] = (odd_cycles[c].size()-1)/(-2);
+					matval[nzcnt] = (odd_cycles[c].size()-1)/(-2.0);
 					nzcnt++; 
 
 					status = CPXaddrows(env, lp, ccnt, rcnt, nzcnt, rhs, sense, matbeg, matind, matval, NULL, NULL);
