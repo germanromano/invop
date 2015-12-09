@@ -646,7 +646,7 @@ void  find_odd_cycle(const vector<vector<bool> > *adyacencias, vector<vector<int
 		if(W_j>TOL){
 			int k = ceil(1/W_j) - 1;
 
-			if(k>5){
+			if(k>=2){
 				int v = Xpj_mayor_0(sol, j, adyacencias, cant_colores_disp);
 				if(v==-1) cerr << "Fallo Xpj_mayor_0" << endl;
 				vector<int> odd_new_cycle;
@@ -676,7 +676,7 @@ int Xpj_mayor_0(double *sol, int j, const vector<vector<bool> > *adyacencias, in
 void buscar_ciclo(int v, int u, const vector<vector<bool> > *adyacencias, int limite_bajo, int limite_alto, vector<int> *odd_new_cycle, bool *encontro_ciclo, vector<bool> *visto){
 	(*visto)[u]=true;
 	odd_new_cycle->push_back(u);
-	if((limite_bajo < 1) && (*adyacencias)[v][u] && (odd_new_cycle->size() % 2 != 0)){
+	if((limite_bajo <= 0) && (*adyacencias)[v][u] && (odd_new_cycle->size() % 2 != 0)){
 		return void();
 	} 
 	else{ 
@@ -685,7 +685,7 @@ void buscar_ciclo(int v, int u, const vector<vector<bool> > *adyacencias, int li
 		}
 		else {
 			int u2 = vecino_con_mas_vecinos(u,adyacencias, visto); //el visto es para no tomar nodos repetidos
-			if(u2 > -1) buscar_ciclo(v,u2, adyacencias,limite_bajo -1, limite_alto -1, odd_new_cycle, encontro_ciclo, visto);
+			if(u2 >= 0) buscar_ciclo(v,u2, adyacencias,limite_bajo -1, limite_alto -1, odd_new_cycle, encontro_ciclo, visto);
 			else *encontro_ciclo = false;
 		}
 	}
