@@ -1,0 +1,153 @@
+3 densidades, 3 particiones, 2 algoritmos; 3 repeticiones
+0.3, 0.6, 0.8
+Default, Default
+
+
+max_iter = 3
+
+50 5 0.3
+1)Optimo Inicial: 0.1
+Optimo: 0.1	(Time: 0.017688 sec)
+2)Optimo Inicial: 0.06
+Optimo: 0.0961538	(Time: 0.025645 sec)
+3)Optimo Inicial: 0.1
+Optimo: 0.1	(Time: 0.0188222 sec)
+
+50 5 0.6
+1)Optimo Inicial: 0.04
+Optimo: 0.0943396	(Time: 0.0374138 sec)
+2)Optimo Inicial: 0.08
+Optimo: 0.0980392	(Time: 0.0293939 sec)
+3)Optimo Inicial: 0.1
+Optimo: 0.1	(Time: 0.0280268 sec)
+
+50 5 0.8
+1)Optimo Inicial: 0.08
+Optimo: 0.0980392	(Time: 0.0508869 sec)
+2)Optimo Inicial: 0.1
+Optimo: 0.1	(Time: 0.034142 sec)
+3)Optimo Inicial: 0.08
+Optimo: 0.0980392	(Time: 0.0654099 sec)
+
+50 10 0.3
+1)Optimo Inicial: 0.14
+Optimo: 0.188679	(Time: 0.0605018 sec)
+2)Optimo Inicial: 0.2
+Optimo: 0.2	(Time: 0.161172 sec)
+3)Optimo Inicial: 0.12
+Optimo: 0.190476	(Time: 0.104793 sec)
+
+50 10 0.6
+1)Optimo Inicial: 0.2
+Optimo: 0.2	(Time: 0.28179 sec)
+2)Optimo Inicial: 0.2
+Optimo: 0.2	(Time: 0.174931 sec)
+3)Optimo Inicial: 0.2
+Optimo: 0.5	(Time: 0.385141 sec)
+
+50 10 0.8
+1)Optimo Inicial: 0.2
+Optimo: 0.2	(Time: 0.200269 sec)
+2)Optimo Inicial: 0.2
+Optimo: 0.2	(Time: 0.475237 sec)
+3)Optimo Inicial: 0.2
+Optimo: 0.2	(Time: 0.246807 sec)
+
+50 15 0.3
+1)Optimo Inicial: 0.3
+Optimo: 1
+2)Optimo Inicial: 0.3
+Optimo: 0.357143	(Time: 0.516127 sec)
+3)Optimo Inicial: 0.3
+Optimo: 1	(Time: 0.324962 sec)
+
+50 15 0.6
+1)Optimo Inicial: 0.3
+Optimo: 0.3	(Time: 0.695117 sec)
+2)Optimo Inicial: 0.3
+Optimo: 1	(Time: 0.742845 sec)
+3)Optimo Inicial: 0.3
+Optimo: 0.5	(Time: 1.67299 sec)
+
+50 15 0.8
+1)Optimo Inicial: 0.3
+Optimo: 0.3	(Time: 1.81116 sec)
+2)Optimo Inicial: 0.28
+Optimo: 0.28	(Time: 1.01923 sec)
+3)Optimo Inicial: 0.3
+Optimo: 1	(Time: 1.13271 sec)
+
+
+max_iter = 10
+
+50 5 0.3
+1)Optimo Inicial: 0.1
+Optimo: 0.1	(Time: 0.148221 sec)
+2)Optimo Inicial: 0.06
+Optimo: 0.170604	(Time: 0.125181 sec)
+3)Optimo Inicial: 0.1
+Optimo: 0.166484	(Time: 0.153007 sec)
+
+50 5 0.6
+1)Optimo Inicial: 0.04
+Optimo: 0.107136	(Time: 0.302808 sec)
+2)Optimo Inicial: 0.08
+Optimo: 0.168067	(Time: 0.261715 sec)
+3)Optimo Inicial: 0.1
+Optimo: 0.156542	(Time: 0.287868 sec)
+
+50 5 0.8
+1)Optimo Inicial: 0.1
+Optimo: 0.13369	(Time: 0.394542 sec)
+2)Optimo Inicial: 0.1
+Optimo: 0.173611	(Time: 0.234566 sec)
+3)Optimo Inicial: 0.08
+Optimo: 0.298507	(Time: 0.226899 sec)
+
+50 10 0.3
+1)Optimo Inicial: 0.2
+Optimo: 0.5	(Time: 0.984079 sec)
+2)Optimo Inicial: 0.2
+Optimo: 0.354167	(Time: 0.879984 sec)
+3)Optimo Inicial: 0.2
+Optimo: 0.351619	(Time: 0.966634 sec)
+
+50 10 0.6
+1)Optimo Inicial: 0.2
+Optimo: 0.2	(Time: 1.54944 sec)
+2)Optimo Inicial: 0.18
+Optimo: 0.5	(Time: 1.2146 sec)
+3)Optimo Inicial: 0.2
+Optimo: 1	(Time: 1.09147 sec)
+
+50 10 0.8
+1)Optimo Inicial: 0.2
+Optimo: 0.37037	(Time: 1.99978 sec)
+2)Optimo Inicial: 0.2
+Optimo: 0.333333	(Time: 1.56447 sec)
+3)Optimo Inicial: 0.2
+Optimo: 0.333333	(Time: 2.70149 sec)
+
+50 15 0.3
+1)Optimo Inicial: 0.3
+Optimo: 1	(Time: 1.28541 sec)
+2)Optimo Inicial: 0.3
+Optimo: 1	(Time: 1.37145 sec)
+3)Optimo Inicial: 0.3
+Optimo: 1	(Time: 1.34721 sec)
+
+50 15 0.6
+1)Optimo Inicial: 0.3
+Optimo: 1	(Time: 2.68969 sec)
+2)Optimo Inicial: 0.3
+Optimo: 1	(Time: 1.80386 sec)
+3)Optimo Inicial: 0.3
+Optimo: 1	(Time: 3.08554 sec)
+
+50 15 0.8
+1)Optimo Inicial: 0.3
+Optimo: 0.500417	(Time: 6.529 sec)
+2)Optimo Inicial: 0.3
+Optimo: 1	(Time: 1.58232 sec)
+3)Optimo Inicial: 0.3
+Optimo: 1	(Time: 3.28998 sec)
