@@ -1,0 +1,324 @@
+3 densidades, 3 particiones, 2 algoritmos, 2 estr. de branching y 2 estr. de seleccion; 3 repeticiones
+0.3, 0.6, 0.8
+Default, best estimate
+Default, Strong branching
+
+Default Default
+
+50 5 0.3
+Optimo: 1	(Time: 0.305163 sec)
+		(Nodos recorridos: 0)
+
+Optimo: 1	(Time: 0.0226581 sec)
+		(Nodos recorridos: 0)
+
+Optimo: 1	(Time: 0.0252628 sec)
+		(Nodos recorridos: 0)
+
+50 5 0.6
+Optimo: 1	(Time: 0.0409992 sec)
+		(Nodos recorridos: 0)
+
+Optimo: 1	(Time: 0.0352769 sec)
+		(Nodos recorridos: 0)
+
+Optimo: 1	(Time: 0.136155 sec)
+		(Nodos recorridos: 0)
+
+50 5 0.8
+Optimo: 1	(Time: 0.0379879 sec)
+		(Nodos recorridos: 0)
+
+Optimo: 2	(Time: 0.0796511 sec)
+		(Nodos recorridos: 0)
+
+Optimo: 2	(Time: 0.394628 sec)
+		(Nodos recorridos: 5)
+
+50 10 0.3
+Optimo: 1	(Time: 0.10767 sec)
+		(Nodos recorridos: 0)
+
+Optimo: 2	(Time: 0.0576901 sec)
+		(Nodos recorridos: 0)
+
+Optimo: 2	(Time: 0.0511851 sec)
+		(Nodos recorridos: 0)
+
+50 10 0.6
+Optimo: 2	(Time: 2.15356 sec)
+		(Nodos recorridos: 140)
+
+Optimo: 2	(Time: 1.82424 sec)
+		(Nodos recorridos: 80)
+
+Optimo: 2	(Time: 0.356461 sec)
+		(Nodos recorridos: 0)
+
+50 10 0.8
+Optimo: 3	(Time: 3.65618 sec)
+		(Nodos recorridos: 114)
+
+Optimo: 3	(Time: 9.26592 sec)
+		(Nodos recorridos: 538)
+
+Optimo: 3	(Time: 7.89903 sec)
+		(Nodos recorridos: 416)
+
+50 15 0.3
+Optimo: 2	(Time: 0.210681 sec)
+		(Nodos recorridos: 0)
+
+Optimo: 2	(Time: 0.180202 sec)
+		(Nodos recorridos: 0)
+
+Optimo: 2	(Time: 0.097085 sec)
+		(Nodos recorridos: 0)
+
+50 15 0.6
+Optimo: 3	(Time: 12.1918 sec)
+		(Nodos recorridos: 717)
+
+Optimo: 4	(Time: 40.1723 sec)
+		(Nodos recorridos: 4119)
+
+Optimo: 4	(Time: 15.5685 sec)
+		(Nodos recorridos: 1217)
+
+50 15 0.8
+Optimo: 5	(Time: 1019.6 sec)
+		(Nodos recorridos: 41477)
+
+Optimo: 5	(Time: 97.299 sec)
+		(Nodos recorridos: 3401)
+
+Optimo: 5	(Time: 17.2459 sec)
+		(Nodos recorridos: 375)
+
+
+
+best estimate Default
+
+50 5 0.3
+Optimo: 1	(Time: 0.04234 sec)
+		(Nodos recorridos: 0)
+Optimo: 1	(Time: 0.0236599 sec)
+		(Nodos recorridos: 0)
+Optimo: 1	(Time: 0.0263 sec)
+		(Nodos recorridos: 0)
+
+50 5 0.6
+Optimo: 1	(Time: 0.0407839 sec)
+		(Nodos recorridos: 0)
+Optimo: 1	(Time: 0.0406229 sec)
+		(Nodos recorridos: 0)
+Optimo: 1	(Time: 0.051368 sec)
+		(Nodos recorridos: 0)
+
+50 5 0.8
+Optimo: 1	(Time: 0.0403321 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.0772631 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.383212 sec)
+		(Nodos recorridos: 5)
+
+50 10 0.3
+Optimo: 1	(Time: 0.0991061 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.0619311 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.063921 sec)
+		(Nodos recorridos: 0)
+
+50 10 0.6
+Optimo: 2	(Time: 2.21242 sec)
+		(Nodos recorridos: 122)
+Optimo: 2	(Time: 1.41175 sec)
+		(Nodos recorridos: 30)
+Optimo: 2	(Time: 0.359617 sec)
+		(Nodos recorridos: 0)
+
+50 10 0.8
+Optimo: 3	(Time: 3.7606 sec)
+		(Nodos recorridos: 114)
+Optimo: 3	(Time: 8.5895 sec)
+		(Nodos recorridos: 521)
+Optimo: 3	(Time: 8.15996 sec)
+		(Nodos recorridos: 443)
+
+50 15 0.3
+Optimo: 2	(Time: 0.101326 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.239274 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.101001 sec)
+		(Nodos recorridos: 0)
+
+50 15 0.6
+Optimo: 3	(Time: 9.43694 sec)
+		(Nodos recorridos: 502)
+Optimo: 4	(Time: 35.372 sec)
+		(Nodos recorridos: 3674)
+Optimo: 4	(Time: 15.6666 sec)
+		(Nodos recorridos: 1193)
+
+50 15 0.8
+Optimo: 5	(Time: 997.424 sec)
+		(Nodos recorridos: 37470)
+Optimo: 5	(Time: 104.617 sec)
+		(Nodos recorridos: 3340)
+Optimo: 5	(Time: 17.4477 sec)
+		(Nodos recorridos: 415)
+
+
+
+Default Strong branching
+
+50 5 0.3
+Optimo: 1	(Time: 0.0449579 sec)
+		(Nodos recorridos: 0)
+Optimo: 1	(Time: 0.022949 sec)
+		(Nodos recorridos: 0)
+Optimo: 1	(Time: 0.026696 sec)
+		(Nodos recorridos: 0)
+
+50 5 0.6
+Optimo: 1	(Time: 0.0338762 sec)
+		(Nodos recorridos: 0)
+Optimo: 1	(Time: 0.0348439 sec)
+		(Nodos recorridos: 0)
+Optimo: 1	(Time: 0.079849 sec)
+		(Nodos recorridos: 0)
+
+50 5 0.8
+Optimo: 2	(Time: 0.090704 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.0943069 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.403302 sec)
+		(Nodos recorridos: 5)
+
+50 10 0.3
+Optimo: 1	(Time: 0.107066 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.061352 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.059536 sec)
+		(Nodos recorridos: 0)
+
+50 10 0.6
+Optimo: 2	(Time: 3.21892 sec)
+		(Nodos recorridos: 38)
+Optimo: 2	(Time: 1.10493 sec)
+		(Nodos recorridos: 10)
+Optimo: 2	(Time: 0.348575 sec)
+		(Nodos recorridos: 0)
+
+50 10 0.8
+Optimo: 3	(Time: 14.5625 sec)
+		(Nodos recorridos: 119)
+Optimo: 3	(Time: 17.8198 sec)
+		(Nodos recorridos: 147)
+Optimo: 3	(Time: 24.5431 sec)
+		(Nodos recorridos: 196)
+
+50 15 0.3
+Optimo: 2	(Time: 0.210355 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.181122 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.09302 sec)
+		(Nodos recorridos: 0)
+
+50 15 0.6
+Optimo: 3	(Time: 14.4307 sec)
+		(Nodos recorridos: 140)
+Optimo: 4	(Time: 159.07 sec)
+		(Nodos recorridos: 1305)
+Optimo: 4	(Time: 66.8584 sec)
+		(Nodos recorridos: 680)
+
+50 15 0.8
+Optimo: 5	(Time: 971.771 sec)
+		(Nodos recorridos: 37470)
+Optimo: 5	(Time: 95.8388 sec)
+		(Nodos recorridos: 3340)
+Optimo: 5	(Time: 17.2488 sec)
+		(Nodos recorridos: 415)
+
+
+best estimate, Strong branching
+
+50 5 0.3
+Optimo: 1	(Time: 0.0486829 sec)
+		(Nodos recorridos: 0)
+Optimo: 1	(Time: 0.0238099 sec)
+		(Nodos recorridos: 0)
+Optimo: 1	(Time: 0.0238099 sec)
+		(Nodos recorridos: 0)
+
+50 5 0.6
+Optimo: 1	(Time: 0.0339189 sec)
+		(Nodos recorridos: 0)
+Optimo: 1	(Time: 0.036221 sec)
+		(Nodos recorridos: 0)
+Optimo: 1	(Time: 0.080035 sec)
+		(Nodos recorridos: 0)
+
+50 5 0.8
+Optimo: 2	(Time: 0.417861 sec)
+		(Nodos recorridos: 5)
+Optimo: 2	(Time: 0.0963731 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.384721 sec)
+		(Nodos recorridos: 5)
+
+50 10 0.3
+Optimo: 1	(Time: 0.107096 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.0612302 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.059521 sec)
+		(Nodos recorridos: 0)
+
+50 10 0.6
+Optimo: 2	(Time: 2.07867 sec)
+		(Nodos recorridos: 19)
+Optimo: 2	(Time: 1.09114 sec)
+		(Nodos recorridos: 10)
+Optimo: 2	(Time: 0.417846 sec)
+		(Nodos recorridos: 0)
+
+50 10 0.8
+Optimo: 3	(Time: 12.5171 sec)
+		(Nodos recorridos: 107)
+Optimo: 3	(Time: 17.8241 sec)
+		(Nodos recorridos: 150)
+Optimo: 3	(Time: 35.6879 sec)
+		(Nodos recorridos: 322)
+
+50 15 0.3
+Optimo: 2	(Time: 0.209649 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.180531 sec)
+		(Nodos recorridos: 0)
+Optimo: 2	(Time: 0.0976732 sec)
+		(Nodos recorridos: 0)
+
+50 15 0.6
+Optimo: 3	(Time: 1.87938 sec)
+		(Nodos recorridos: 15)
+Optimo: 4	(Time: 165.492 sec)
+		(Nodos recorridos: 1367)
+Optimo: 4	(Time: 50.196 sec)
+		(Nodos recorridos: 520)
+
+50 15 0.8
+No termino	(Time: 2023.97 sec)
+		(Nodos: 9440)
+Optimo: 5	(Time: 1019.91 sec)
+		(Nodos recorridos: 4854)
+Optimo: 5	(Time: 144.459 sec)
+		(Nodos recorridos: 885)
+
