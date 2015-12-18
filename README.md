@@ -1,4 +1,4 @@
-## TP Final - Investigación Operativa
+## Trabajo Práctico - Investigación Operativa
 
 ### Coloreo Particionado con Branch and Bound
 *  Ejecutar Makefile
