@@ -1,3 +1,5 @@
+Trabajo Práctico Final - Investigación Operativa
+
 *Coloreo Particionado con Branch and Bound
 	-ejecutar Makefile
 	-parámetro: input_file.dot
